@@ -8,6 +8,7 @@ def dir_path(string):
         raise NotADirectoryError(string)
 
 def check_files(path):
+    """A function to check whether inputfiles have correct format"""
     work_files=[]
     my_pattern=re.compile("\w+_\w+_\w+.pdb*")
     for file in os.listdir(path):
@@ -19,6 +20,7 @@ def check_files(path):
         return work_files
 
 def output_dir(string):
+    """A function to check whether outputfile already exists"""
     if  options.force is False:
         if os.path.isdir(string):
             raise ValueError("Directory already exists. Please set -f to True to overwrite the directory")
