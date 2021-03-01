@@ -1,5 +1,8 @@
 import os, sys, gzip, argparse, re, glob
 
+def new_func():
+    asdasd
+
 def dir_path(string):
     """A function to check whether a string is a directory or not"""
     if os.path.isdir(string):
@@ -67,4 +70,4 @@ parser.add_argument('-v','--verbose',
 options=parser.parse_args()
 
 if __name__=="__main__":
-    check_files(options.input)
+    work_files=check_files(options.input)
