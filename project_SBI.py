@@ -1,35 +1,7 @@
 import os, sys, gzip, argparse, re, glob
 
-def new_func():
-    asdasd
-
-def dir_path(string):
-    """A function to check whether a string is a directory or not"""
-    if os.path.isdir(string):
-        return string
-    else:
-        raise NotADirectoryError(string)
-
-def check_files(path):
-    """A function to check whether inputfiles have correct format"""
-    work_files=[]
-    my_pattern=re.compile("\w+_\w+_\w+.pdb*")
-    for file in os.listdir(path):
-        work_files.append(my_pattern.match(file))
-    if not work_files:
-#    if my_pattern.match(file) == None:
-        raise ValueError("Check the input files format")
-    else:
-        return work_files
-
-def output_dir(string):
-    """A function to check whether outputfile already exists"""
-    if  options.force is False:
-        if os.path.isdir(string):
-            raise ValueError("Directory already exists. Please set -f to True to overwrite the directory")
-        else:
-            sys.stderr.write("Setting the output directory to %s" % (string))
-            os.mkdir(string)
+from functions import *
+from Bio.PDB import *
 
 parser=argparse.ArgumentParser(description="SBI_PYT program")
 requiredNamed = parser.add_argument_group('required named arguments')
@@ -70,4 +42,19 @@ parser.add_argument('-v','--verbose',
 options=parser.parse_args()
 
 if __name__=="__main__":
-    work_files=check_files(options.input)
+
+    try:
+        work_files=check_files(options.input)
+    except NotADirectoryError as e:
+        sys.stderr.write("Input option does not correspond to an existing directory. Please try again.")
+        exit()
+
+    if options.verbose:
+        sys.stderr.write("%d files found in $s \n" % (len(work_files),options.input))
+
+    pdb_parser=PDBPaser(PERMISSIVE=1)
+
+#Get all the files as structures in a dictionary with the pdb parser from the Bio package
+    structures={}
+    for file in work_files:
+        structures[file[-7:-4]]=read_pdb_files(file)
