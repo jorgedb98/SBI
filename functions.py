@@ -1,4 +1,8 @@
-def read_pdb_files(files):
+import os, sys, gzip, argparse, re, glob
+
+from Bio.PDB import *
+
+def read_pdb_files(pdb_files):
     """Given a pdb file, read it, remove the heteroatoms and create a dictionary with the chain ids and the structure
 
     Input:
@@ -7,10 +11,37 @@ def read_pdb_files(files):
     Output:
     Dictionary with three elements: Chain ids (2) and the structure """
 
-    structure=pdb_parser.get_structure(files)
+    dict_to_return={}
 
-    chains_ids=[chain.id for chain in structure[0].get_chains()]
+    for file in pdb_files:
+        structure=pdb_parser.get_structure(files[:-4],files)
 
+        chains_ids=''.join([chain.id for chain in structure.get_chains()])
+        chains=[]
+        alpha_carbon_chains=[]
+
+        #Obtain the alpha carbon structure of each chain
+        removeable=[]
+        for chain in structure.get_chains():
+            chains.append(chain)
+            for residue in chain:
+                if residue in chain:
+                    if residue.id[0] != ' ':
+                        removeable.append(residue.id)
+
+        #Now that heteroatoms are selected, remove them from the chain
+            for residue in removeable:
+                chain.detach_child(residue)
+
+        #Finally, obtain the alpha carbon chain and store it
+            chain_alpha = alpha_carbons.build_peptides(chain)
+            alpha_carbon_chains.append(chain_alpha[0].get_sequence())
+
+    #Check the file only contains two chains(pairwise interaction) after all the parsing:
+    if len(alpha_carbon_chains != 2):
+        if options.verbose:
+            sys.stderr.write("File %s is not a pairwise interaction" % (file))
+        continue
 
 def dir_path(string):
     """A function to check whether a string is a directory or not"""
