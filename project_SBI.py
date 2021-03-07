@@ -52,8 +52,5 @@ if __name__=="__main__":
     if options.verbose:
         sys.stderr.write("%d files found in $s \n" % (len(work_files),options.input))
 
-    pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
-    alpha_carbons=CaPPBuilder()
-
 #Get all the files as structures in a dictionary with the pdb parser from the Bio package and the function we built around it
     structure_data=read_pdb_files(work_files)
