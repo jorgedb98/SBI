@@ -60,15 +60,17 @@ def read_pdb_files(pdb_files):
         else:
             heterodimer_dict[id]=structure
 
-    if isEmpty(homodimer_dict) and isEmpty(heterodimer_dict):
+    if (len(homodimer_dict)==0) and (len(heterodimer_dict)==0):
         sys.stderr.write("No binary interaction were found")
         exit()
-    elif isEmpty(homodimer_dict):
-        return heterodimer_dict
-    elif isEmpty(heterodimer_dict):
-        return homodimer_dict
+    elif (len(homodimer_dict)==0):
+        dict_to_return["heterodimers"]=heterodimer_dict
+    elif (len(heterodimer_dict)==0):
+        dict_to_return["homodimers"]=homodimer_dict
     else:
-        return homodimer_dict,heterodimer_dict
+        dict_to_return["heterodimers"]=heterodimer_dict
+        dict_to_return["homodimers"]=homodimer_dict
+    return dict_to_return
 
 def sequence_alignment(chain1,chain2):
     """Comparing if the pairwise interaction holds a homodimer or heterodimer"""
@@ -76,6 +78,9 @@ def sequence_alignment(chain1,chain2):
     identity=align[0][2]/max(len(chain1),len(chain2))
     return identity
 
+
+    alignment = pairwise2.align.globalxx(sequence1, sequence2)
+    return alignment
 def dir_path(string):
     """A function to check whether a string is a directory or not"""
     if os.path.isdir(string):
@@ -95,6 +100,22 @@ def check_files(path):
     else:
         os.chdir(path)
         return work_files
+
+def check_stech(path):
+    """A function to check the input stech file"""
+    stech_file=[]
+    stech_patern=re.compile(".txt")
+    for file in os.listdir(path):
+        return file
+
+
+#         stech_file.append(stech_patern.match(file).group(0))
+#     if not stech_file:
+# #    if my_pattern.match(file) == None:
+#         raise ValueError("Check the stech file format")
+#     else:
+#         os.chdir(path)
+#         return stech_file
 
 def output_dir(string):
     """A function to check whether outputfile already exists"""
