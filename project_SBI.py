@@ -79,38 +79,33 @@ if __name__=="__main__":
         alpha_carbons=CaPPBuilder()
         heterodimers=structure_data["heterodimers"]
         heterodimer_list=list(heterodimers.keys()) # List holding the files id like "A_B"
-        # print(heterodimer_list)
-        # heterodimer pairwise interaction in list chains1 and chains2
+
+        # hold heterodimer pairwise interaction in list chains1 and chains2
         for j in range(len(heterodimer_list)-1):
             chains1=heterodimers[heterodimer_list[j]].get_chains()
-            for i in range(j+1,len(heterodimer_list)):
-                chains2=heterodimers[heterodimer_list[i]].get_chains()
-                test=[x.id for x in chains2]
-                print(test)
+
+            for i in range(j+1,len(heterodimer_list)+1):
                 # access the two chains in each heterodimer structure
                 for chain in chains1:
                     chain_alpha = alpha_carbons.build_peptides(chain)
                     chain_alpha = chain_alpha[0].get_sequence()
-                    print("1.chain" + str(chain))
-                    print(chains2)
-
+                    chains2=heterodimers[heterodimer_list[i]].get_chains()
 
                     for chain2 in chains2:
                         chain_alpha2 = alpha_carbons.build_peptides(chain2)
                         chain_alpha2 = chain_alpha2[0].get_sequence()
-                        print("2.chain" + str(chain2))
 
                         #If the chains share the same id, do not compare them since they should be similar
-                        # if chain.id == chain2.id:
-                        #     continue
+                        if chain.id == chain2.id:
+                            continue
 
                         alignment = pairwise2.align.globalxx(chain_alpha, chain_alpha2)
                         alig_score=alignment[0][2]/max(len(chain_alpha),len(chain_alpha2))
-                        print(chain.id,chain2.id,str(alig_score)+"\n")
                         if alig_score > 0.95:
                             if chain2.id in same_chains:
-                                continue
+                                pass
                             else:  # save same sequences in dictionary with 2. chainid as key and first chainid as value
                                 same_chains[chain2.id]=chain.id
-    print(same_chains) # Checkpoint
-    # print(structure_data)
+
+
+    print(same_chains) # Checkpoint: same_chains{} holds the ids to chains from different interactions that have over 95% similarity (same ids like "A:A" not inclued)
