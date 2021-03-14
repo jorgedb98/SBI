@@ -1,4 +1,4 @@
-import os, sys, gzip, argparse, re, glob
+import os, sys, gzip, argparse, re, glob, numpy
 
 from functions import *
 from Bio.PDB import *
@@ -59,9 +59,7 @@ if __name__=="__main__":
 # Process Stoichiometry if provided by User
     if options.stechiometry:
         if options.verbose:
-            sys.stderr.write("You have provided the stechiometry found in %s\n" % (options.stechiometry))
-        # cwd = os.getcwd()
-        # print(cwd)
+            sys.stderr.write("You have provided the stoichiometry found in %s\n" % (options.stechiometry))
         try:
             stech_file={}
             with open(options.stechiometry, "r") as file:
@@ -74,7 +72,7 @@ if __name__=="__main__":
 
 
 #Check the heterodimer structures to find the same chain under different chain ids
-    if structure_data["heterodimers"]: # Check if we have heterodimers
+    if "heterodimers" in structure_data.keys(): # Check if we have heterodimers
         same_chains={}
         alpha_carbons=CaPPBuilder()
         heterodimers=structure_data["heterodimers"]
@@ -106,6 +104,64 @@ if __name__=="__main__":
                                 pass
                             else:  # save same sequences in dictionary with 2. chainid as key and first chainid as value
                                 same_chains[chain2.id]=chain.id
+    else:
+        pass
+
+#Process every scenario differently
+#Easiest one: All homodimers and no heterodimers
+    if "homodimers" in structure_data.keys() and not "heterodimers" in structure_data.keys():
+        if options.verbose:
+            sys.stderr.write("Input files contain %d homodimers and no heterodimers\n" % len(structure_data["homodimers"]))
+
+        #take one chain as fixed list of atoms
+        #superimpose another binary interaction to the fixed chain using biopython superimposer
+        homodimer_dict=structure_data["homodimers"]
+        ref_model = homodimer_dict[list(homodimer_dict.keys())[0]]
+
+        sup = Superimposer()
+
+        homodimer_transformed=transform_to_structure(homodimer_dict,"homodimers")
+
+        macrocomplex=Structure.Structure("macrocomplex")
+        macrocomplex.add(Model.Model(0))
+        ref_model=homodimer_transformed[0] # define reference model (first element)
+        macrocomplex.add(list(ref_model.get_chains())[0])
+        macrocomplex.add(list(ref_model.get_chains())[1])
+
+        for alt_model in homodimer_transformed:
+            ref_atoms = []
+            alt_atoms = []
+            for (ref_chain, alt_chain) in zip(ref_model, alt_model):
+                for ref_res, alt_res in zip(ref_chain, alt_chain):
+                    if ref_res.resname == alt_res.resname and ref_res.id == alt_res.id:
+                        ref_atoms.append(alt_res['CA'])
+                        alt_atoms.append(alt_res['CA'])
+
+            sup.set_atoms(ref_atoms, alt_atoms)
+
+            if ref_model.id == alt_model.id:
+    	        #Check for self/self get zero RMS, zero translation
+    	        #and identity matrix for the rotation.
+                assert numpy.abs(sup.rms) < 0.0000001
+                assert numpy.max(numpy.abs(sup.rotran[1])) < 0.000001
+                assert numpy.max(numpy.abs(sup.rotran[0]) - numpy.identity(3)) < 0.000001
+            else:
+    	        #Update the structure by moving all the atoms in
+    	        #this model (not just the ones used for the alignment)
+                sup.apply(alt_model.get_atoms())
+                alt_model.detach_child(list(alt_model.get_chains())[0].id)
+                sys.stderr.write("RMS(first model, model %i) = %0.2f" % (alt_model.id, sup.rms))
 
 
-    print(same_chains) # Checkpoint: same_chains{} holds the ids to chains from different interactions that have over 95% similarity (same ids like "A:A" not inclued)
+
+    # print(same_chains) # Checkpoint: same_chains{} holds the ids to chains from different interactions that have over 95% similarity (same ids like "A:A" not inclued)
+
+#All heterodimers:
+# elif bool(structure_data["heterodimers"]) and not bool(structure_data["homodimers"]):
+#         if options.verbose:
+#             sys.stderr.write("Input files contain %d heterodimers and no homodimers\n" % len(structure_data["heterodimers"]))
+#
+# #Homodimers and heterodimers
+#     else:
+#         if options.verbose:
+#             sys.stderr.write("Input files contain %d homodimers and %d heterodimers\n" % (len(structure_data["homodimers"],len(structure_data["heterodimers"])))

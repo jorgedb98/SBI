@@ -89,6 +89,23 @@ def dir_path(string):
     else:
         raise NotADirectoryError(string)
 
+def transform_to_structure(dictionary,name):
+    """
+    From a dictionary of binary interactions (heterodimer/homodimer dictionaries)
+    transform it to a structure class object which will be used in superimposition"""
+
+    structure_object=Structure.Structure(name)
+
+    i=0
+
+    for structure_chains in dictionary.values():
+        structure_object.add(Model.Model(i))
+        for chain in structure_chains.get_chains():
+            structure_object[i].add(chain)
+        i+=1
+
+    return structure_object
+
 def check_files(path):
     """A function to check whether PDB input files have correct format"""
     work_files=[]
@@ -110,3 +127,8 @@ def output_dir(string):
         else:
             sys.stderr.write("Setting the output directory to %s" % (string))
             os.mkdir(string)
+
+# def model_class():
+#     """A function to transfer a binary interaction to
+#     a Model class from Biopython Structure object"""
+#   structure_class =
