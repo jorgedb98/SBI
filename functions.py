@@ -28,7 +28,6 @@ def read_pdb_files(pdb_files):
         #Obtain the alpha carbon structure of each chain
         removeable=[]
         for chain in structure.get_chains():
-            chains.append(chain)
             for residue in chain:
                 if residue in chain:
                     if residue.id[0] != ' ':
@@ -37,6 +36,7 @@ def read_pdb_files(pdb_files):
         #Now that heteroatoms are selected, remove them from the chain
             for residue in removeable:
                 chain.detach_child(residue)
+            chains.append(chain)
 
         #Finally, obtain the alpha carbon chain and store it
         #Check if the length of the polypeptide chain is long enough to not be considered a ligand/cofactor
@@ -61,7 +61,7 @@ def read_pdb_files(pdb_files):
             heterodimer_dict[id]=structure
 
     if (len(homodimer_dict)==0) and (len(heterodimer_dict)==0):
-        sys.stderr.write("No binary interaction were found")
+        sys.stderr.write("No binary interactions were found")
         exit()
     elif (len(homodimer_dict)==0):
         dict_to_return["heterodimers"]=heterodimer_dict
@@ -81,6 +81,7 @@ def sequence_alignment(chain1,chain2):
 
     alignment = pairwise2.align.globalxx(sequence1, sequence2)
     return alignment
+
 def dir_path(string):
     """A function to check whether a string is a directory or not"""
     if os.path.isdir(string):
@@ -89,33 +90,17 @@ def dir_path(string):
         raise NotADirectoryError(string)
 
 def check_files(path):
-    """A function to check whether inputfiles have correct format"""
+    """A function to check whether PDB input files have correct format"""
     work_files=[]
     my_pattern=re.compile("\w+_\w+_\w+.pdb*")
     for file in os.listdir(path):
         work_files.append(my_pattern.match(file).group(0))
     if not work_files:
 #    if my_pattern.match(file) == None:
-        raise ValueError("Check the input files format")
+        raise ValueError("Check the PDB input files format")
     else:
         os.chdir(path)
         return work_files
-
-def check_stech(path):
-    """A function to check the input stech file"""
-    stech_file=[]
-    stech_patern=re.compile(".txt")
-    for file in os.listdir(path):
-        return file
-
-
-#         stech_file.append(stech_patern.match(file).group(0))
-#     if not stech_file:
-# #    if my_pattern.match(file) == None:
-#         raise ValueError("Check the stech file format")
-#     else:
-#         os.chdir(path)
-#         return stech_file
 
 def output_dir(string):
     """A function to check whether outputfile already exists"""
