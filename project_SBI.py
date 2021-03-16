@@ -34,7 +34,7 @@ parser.add_argument('-f','--force',
                     help="In case the output directory exists, set the value to true in order to replace it. Otherwise, the output will be stored in a subdirectory.")
 
 parser.add_argument('-v','--verbose',
-                    default=None,
+                    default=False,
                     dest="verbose",
                     action="store_true",
                     help="Set the value to true if you want to console output of the progress")
@@ -50,10 +50,10 @@ if __name__=="__main__":
         exit()
 
     if options.verbose:
-        sys.stderr.write("%d files found in $s \n" % (len(work_files),options.input))
+        sys.stderr.write("%d files found in %s \n" % (len(work_files),options.input))
 
 #Get all the files as structures in a dictionary with the pdb parser from the Bio package and the function we built around it
-    structure_data=read_pdb_files(work_files)
+    structure_data=read_pdb_files(work_files, options.verbose)
     os.chdir("../") # after processing input files get back to main working directory
 
 # Process Stoichiometry if provided by User
@@ -73,6 +73,7 @@ if __name__=="__main__":
 
 #Check the heterodimer structures to find the same chain under different chain ids
     if "heterodimers" in structure_data.keys(): # Check if we have heterodimers
+        # print("are you there?")
         same_chains={}
         alpha_carbons=CaPPBuilder()
         heterodimers=structure_data["heterodimers"]
@@ -80,34 +81,43 @@ if __name__=="__main__":
 
         # hold heterodimer pairwise interaction in list chains1 and chains2
         for j in range(len(heterodimer_list)-1):
+            #print("do you eter here?")
             chains1=heterodimers[heterodimer_list[j]].get_chains()
 
+
+
+            ##################################################
+
+
             for i in range(j+1,len(heterodimer_list)+1):
+
                 # access the two chains in each heterodimer structure
                 for chain in chains1:
+                    #print(heterodimer_list[j])
                     chain_alpha = alpha_carbons.build_peptides(chain)
                     chain_alpha = chain_alpha[0].get_sequence()
                     chains2=heterodimers[heterodimer_list[i]].get_chains()
 
                     for chain2 in chains2:
+                        #print(heterodimer_list[i])
                         chain_alpha2 = alpha_carbons.build_peptides(chain2)
                         chain_alpha2 = chain_alpha2[0].get_sequence()
 
                         #If the chains share the same id, do not compare them since they should be similar
-                        if chain.id == chain2.id:
-                            continue
+                        if not chain.id == chain2.id:
+                            alignment = pairwise2.align.globalxx(chain_alpha, chain_alpha2)
+                            alig_score=alignment[0][2]/max(len(chain_alpha),len(chain_alpha2))
+                            print(str(chain.id)+ "\t" + chain2.id + "\t" + str(alig_score))
+                            if alig_score > 0.95:
 
-                        alignment = pairwise2.align.globalxx(chain_alpha, chain_alpha2)
-                        alig_score=alignment[0][2]/max(len(chain_alpha),len(chain_alpha2))
-                        if alig_score > 0.95:
-                            if chain2.id in same_chains:
-                                pass
-                            else:  # save same sequences in dictionary with 2. chainid as key and first chainid as value
-                                same_chains[chain2.id]=chain.id
-    else:
-        pass
+                                if not chain2.id in same_chains:
+                                    # save same sequences in dictionary with 2. chainid as key and first chainid as value
+                                    same_chains[chain2.id]=chain.id
+
 
 #Process every scenario differently
+    sup = Superimposer()
+    print(structure_data)
 #Easiest one: All homodimers and no heterodimers
     if "homodimers" in structure_data.keys() and not "heterodimers" in structure_data.keys():
         if options.verbose:
@@ -118,13 +128,11 @@ if __name__=="__main__":
         homodimer_dict=structure_data["homodimers"]
         ref_model = homodimer_dict[list(homodimer_dict.keys())[0]]
 
-        sup = Superimposer()
-
         homodimer_transformed=transform_to_structure(homodimer_dict,"homodimers")
 
         macrocomplex=Structure.Structure("macrocomplex")
         macrocomplex.add(Model.Model(0))
-        ref_model=homodimer_transformed[0] # define reference model (first element)
+        ref_model = homodimer_transformed[0] # define reference model (first element)
         macrocomplex.add(list(ref_model.get_chains())[0])
         macrocomplex.add(list(ref_model.get_chains())[1])
 
@@ -150,18 +158,57 @@ if __name__=="__main__":
     	        #this model (not just the ones used for the alignment)
                 sup.apply(alt_model.get_atoms())
                 alt_model.detach_child(list(alt_model.get_chains())[0].id)
-                sys.stderr.write("RMS(first model, model %i) = %0.2f" % (alt_model.id, sup.rms))
-
+                sys.stderr.write("RMSD(first model, model %i) = %0.2f" % (alt_model.id, sup.rms))
 
 
     # print(same_chains) # Checkpoint: same_chains{} holds the ids to chains from different interactions that have over 95% similarity (same ids like "A:A" not inclued)
 
-#All heterodimers:
-# elif bool(structure_data["heterodimers"]) and not bool(structure_data["homodimers"]):
-#         if options.verbose:
-#             sys.stderr.write("Input files contain %d heterodimers and no homodimers\n" % len(structure_data["heterodimers"]))
+# All heterodimers:
+    elif "heterodimers" in structure_data.keys() and not "homodimers" in structure_data.keys():
+        print("it enters here")
+        if options.verbose:
+            sys.stderr.write("Input files contain %d heterodimers and no homodimers\n" % len(structure_data["heterodimers"]))
+
+        heterodimer_dict = structure_data["heterodimers"]
+
+        ## Set the maximum number of chains the complex will have and get those files that can be useful
+        if stech_file: # If there is stechiometry file
+            # max_chains = sum(len(list(stech_file.values()))) # The max number = the sum of stechiometry
+            print("1", heterodimer_dict)
+            # get those pairwise interactions that can be used if stechiometry is provided
+            to_remove=[]
+            for structure in heterodimer_dict.values():
+                chains = [x.id for x in structure.get_chains()]
+                if not chains[0] in stech_file.keys() and not chains[1] in stech_file.keys():
+                    if not chains[0] in stech_file.keys() and not chains[1] in same_chains.item():
+                        to_remove.append(structure.id) #del interaction file if neither of the chains can be superimposed
+                elif not chains[0] in stech_file.keys():
+                    if not chains[0] in same_chains.item():
+                        to_remove.append(structure.id)
+                elif not chains[1] in stech_file.keys():
+                    if not chains[1] in same_chains.items():
+                        to_remove.append(structure.id)
+
+            for id in to_remove:
+                del heterodimer_dict[id]
+
+            print("2", str(same_chains))
+
+        else: # If not stechiometry provided
+            max_chains = 2*len(heterodimer_dict.keys()) # The max number = twice the number of heterodimer files
+
+
+        heterodimer_transformed = transform_to_structure(heterodimer_dict, "heterodimer")
+
+        # for heterodimers in len(heterodimer_dict.items()): # iterate over list of structure using each as ref model
+        #     ref_model = heterodimer_transformed[heterodimer]
+        #     i = 0
+        #     while i < max_chains: # Iterate while number of max chains is not achieved
+
+
+
 #
-# #Homodimers and heterodimers
+# #Homodimers and heterodimer
 #     else:
 #         if options.verbose:
 #             sys.stderr.write("Input files contain %d homodimers and %d heterodimers\n" % (len(structure_data["homodimers"],len(structure_data["heterodimers"])))

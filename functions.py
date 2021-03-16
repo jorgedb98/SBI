@@ -3,7 +3,8 @@ import os, sys, gzip, argparse, re, glob
 from Bio.PDB import *
 from Bio import pairwise2
 
-def read_pdb_files(pdb_files):
+def read_pdb_files(pdb_files, options_verbose):
+    print("hola")
     """Given a pdb file, read it, remove the heteroatoms and create a dictionary with the chain ids and the structure
 
     Input:
@@ -41,14 +42,15 @@ def read_pdb_files(pdb_files):
         #Finally, obtain the alpha carbon chain and store it
         #Check if the length of the polypeptide chain is long enough to not be considered a ligand/cofactor
             if len(chain)<=25:
-                structure[0].detach_child(chain)
+                structure[0].detach_child(chain.id)
             else:
                 chain_alpha = alpha_carbons.build_peptides(chain)
                 alpha_carbon_chains.append(chain_alpha[0].get_sequence())
 
+
         #Check the file only contains two chains(pairwise interaction) after all the parsing:
         if len(alpha_carbon_chains)!= 2:
-            if options.verbose:
+            if options_verbose:
                 sys.stderr.write("File %s is not a pairwise interaction" % (file))
             continue
 
@@ -119,9 +121,9 @@ def check_files(path):
         os.chdir(path)
         return work_files
 
-def output_dir(string):
+def output_dir(string, options_force):
     """A function to check whether outputfile already exists"""
-    if  options.force is False:
+    if  options_force is False:
         if os.path.isdir(string):
             raise ValueError("Directory already exists. Please set -f to True to overwrite the directory")
         else:
