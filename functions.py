@@ -109,7 +109,9 @@ def transform_to_structure(dictionary,name):
     return structure_object
 
 def check_files(path):
-    """A function to check whether PDB input files have correct format"""
+    """
+    A function to check whether PDB input files have correct format
+    """
     work_files=[]
     my_pattern=re.compile("\w+_\w+_\w+.pdb*")
     for file in os.listdir(path):
@@ -122,7 +124,9 @@ def check_files(path):
         return work_files
 
 def output_dir(string, options_force):
-    """A function to check whether outputfile already exists"""
+    """
+    A function to check whether outputfile already exists
+    """
     if  options_force is False:
         if os.path.isdir(string):
             raise ValueError("Directory already exists. Please set -f to True to overwrite the directory")
@@ -130,7 +134,35 @@ def output_dir(string, options_force):
             sys.stderr.write("Setting the output directory to %s" % (string))
             os.mkdir(string)
 
-# def model_class():
-#     """A function to transfer a binary interaction to
-#     a Model class from Biopython Structure object"""
-#   structure_class =
+def superimpose_structure(fixed_structure, moving_structure, RMSD):
+    """
+    A function to superimpose two structures using Superimposer from Biopython
+    INPUT: fixed structure as refernce, moving structure as the one to be imposed
+    """
+
+    sup = Superimposer()   # Superimposer from Biopython
+    fixed_atoms = {}
+    moving_atoms = {}
+    for chainy in fixed_structure:
+        for chainy2 in moving_structure:
+            fixed_atoms = chain.get_atoms()     # get list of atoms from fixed reference structure
+            moving_atoms = chain2.get_atoms()   # get list of atoms from non-fixed structure
+            sup.set_atoms(fixed_atoms, moving_atoms) # using list of atoms to create rotation and translation matrix
+
+
+    rotation = sup.rotran # get rotation from Superimposer
+    RMSD = sup.rms # get RMSD from superimposer
+    print(sup.rotran)
+    print(sup.rms)
+
+    superimposed_structure = sup.apply(moving) # apply the rotation and translation matrix to the non-fixed structure
+
+# # Specify the atom lists
+# # 'fixed' and 'moving' are lists of Atom objects
+# # The moving atoms will be put on the fixed atoms
+# sup.set_atoms(fixed, moving)
+# # Print rotation/translation/rmsd
+# print(sup.rotran)
+# print(sup.rms)
+# # Apply rotation/translation to the moving atoms
+# sup.apply(moving)

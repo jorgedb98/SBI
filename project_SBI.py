@@ -70,6 +70,9 @@ if __name__=="__main__":
             sys.stderr.write("Stechiometry option does not correspond to an existing directory. Please try again.\n")
             exit()
 
+        number_chains=sum(list(stech_file.values())) #get number of chains for recursive superimposition
+    else:
+        number_chains=15 #set default number of chains if no stechiometry is given by user
 
 #Check the heterodimer structures to find the same chain under different chain ids
     if "heterodimers" in structure_data.keys(): # Check if we have heterodimers
@@ -83,11 +86,6 @@ if __name__=="__main__":
         for j in range(len(heterodimer_list)-1):
             #print("do you eter here?")
             chains1=heterodimers[heterodimer_list[j]].get_chains()
-
-
-
-            ##################################################
-
 
             for i in range(j+1,len(heterodimer_list)+1):
 
@@ -114,14 +112,23 @@ if __name__=="__main__":
                                     # save same sequences in dictionary with 2. chainid as key and first chainid as value
                                     same_chains[chain2.id]=chain.id
 
+#######################################################
+###SUPERIMPOSE: Process every scenario differently#####
+#######################################################
 
-#Process every scenario differently
     sup = Superimposer()
     print(structure_data)
-#Easiest one: All homodimers and no heterodimers
+
+    ## Easiest one: All homodimers and no heterodimers
     if "homodimers" in structure_data.keys() and not "heterodimers" in structure_data.keys():
         if options.verbose:
             sys.stderr.write("Input files contain %d homodimers and no heterodimers\n" % len(structure_data["homodimers"]))
+        if len(structure_data["homodimers"]) < 2:           # check if more than 2 files are provided
+            sys.stderr.write("Not enough homodimers provided to build a complex.")
+            exit()                                          # exit function
+
+        # reference model
+
 
         #take one chain as fixed list of atoms
         #superimpose another binary interaction to the fixed chain using biopython superimposer
@@ -163,7 +170,7 @@ if __name__=="__main__":
 
     # print(same_chains) # Checkpoint: same_chains{} holds the ids to chains from different interactions that have over 95% similarity (same ids like "A:A" not inclued)
 
-# All heterodimers:
+    ## All heterodimers:
     elif "heterodimers" in structure_data.keys() and not "homodimers" in structure_data.keys():
         print("it enters here")
         if options.verbose:
@@ -208,7 +215,7 @@ if __name__=="__main__":
 
 
 #
-# #Homodimers and heterodimer
+#     ## Homodimers and heterodimer
 #     else:
 #         if options.verbose:
 #             sys.stderr.write("Input files contain %d homodimers and %d heterodimers\n" % (len(structure_data["homodimers"],len(structure_data["heterodimers"])))
