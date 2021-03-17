@@ -166,3 +166,52 @@ def superimpose_structure(fixed_structure, moving_structure, RMSD):
 # print(sup.rms)
 # # Apply rotation/translation to the moving atoms
 # sup.apply(moving)
+##################################################################################
+
+#From here onwards it is all ideas
+
+def align_chains(chain1,chain2):
+    """
+    A function aligning two chains with each other
+    Returns the final alignment score of both chains
+    """
+    alpha_carbons=CaPPBuilder()
+
+    chain1_carbons=alpha_carbons.build_peptides(chain1)
+    chain1_carbons=chain1_carbons[0].get_sequence()
+
+    chain2_carbons=alpha_carbons.build_peptides(chain2)
+    chain2_carbons=chain2_carbons.get_sequence()
+
+    alignment=pairwise2.align.globalxx(chain1_carbons,chain2_carbons)
+
+    alig_score=alignment[0][2]/max(len(chain1_carbons),len(chain2_carbons))
+
+    return alig_score
+
+def superimpose_chains(ref_structure,alt_structure,threshold):
+    """
+    Core function to firstly align chains from reference and alternative model.
+    Secondly, for those chains found to be similar, superimpose them and obtain
+    a dictionary with all the possible superimposition of the chains from the
+    two structures (if the superimposition is below a certain RMSD threshold)
+    """
+    superimpositions={}
+    best_RMSD=""
+    ref_chains=[x for x in ref_structure.get_chains()]
+    alt_chains=[x for x in alt_strucuture.get_chains()]
+    sup=Superimposer() # Superimposer from Biopython
+
+    for ref_chain in ref_chains:
+        for alt_chain in alt_chains:
+            if align_chains(ref_chain,alt_chain) > 0.95: # for the similar chains
+                ref_atoms=ref_chain.get_atoms()
+                alt_atoms=alt_chain.get_atoms()
+                sup.set_atoms(ref_atoms,alt_atoms)  # retrieve rotation and translatkon matrix
+                RMSD=sup.rms                        # get RMSD for superimposition
+                if not RMSD.rms > threshold:
+                    if best_RMSD="" or RMSD < best_RMSD:
+                        best_RMSD=RMSD
+                    superimpositions[(ref_chain.id,sample_chain.id)]=sup # add superimposition to dictionary
+    if not superimposition =={}
+        return (superimpositions,best_RMSD)
