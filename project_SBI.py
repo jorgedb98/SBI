@@ -232,11 +232,22 @@ if __name__=="__main__":
             to_end=het_list.pop(0) # pop the first heterodimer pair if no superimposition could be made
             het_list.append(to_end) # Append it to the end of the list to see if it can be superimposed latter
             continue
+    #Program continues if there are superimpositions
 
-        # for possibility in superimposition:
-        #     print(possibility)
         for possibility, sup in superimposition[0]: #Iterate over the dictionary with superimpositions, not the RMSD
             added_chain = [chain for chain in moving_structure if chain.id != possibility[1]][0]
-            sup.apply(added_chain.get_atoms())
-            # print(sup)
-    #Program continues if there are superimpositions
+            sup.apply(added_chain.get_atoms()) # apply rotation matrix to moving structure
+            ref_atoms = list(ref_structure.get_atoms()) # atoms of reference model
+            moving_atoms = list(added_chain.get_atoms()) # atoms of moving model
+            print(moving_atoms)
+            # Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
+            # clashes = []
+            # for atoms in moving_atoms:
+            #     atoms_clashed = Neighbor.search(atoms.coord,5) # check for atoms overlapping between moving structure and object Neighbor from reference structure
+            #     # print(atoms_clashed)
+            #     if len(atoms_clashed) > 0:				#if there are clashes
+            #         clashes.extend(atoms_clashed)       # add clashing atoms to clashlist
+            #
+            #
+            #     # print(clashes)
+            # print(len(clashes))
