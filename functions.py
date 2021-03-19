@@ -4,7 +4,6 @@ from Bio.PDB import *
 from Bio import pairwise2
 
 def read_pdb_files(pdb_files, options_verbose):
-    print("hola")
     """Given a pdb file, read it, remove the heteroatoms and create a dictionary with the chain ids and the structure
 
     Input:
@@ -181,7 +180,7 @@ def align_chains(chain1,chain2):
     chain1_carbons=chain1_carbons[0].get_sequence()
 
     chain2_carbons=alpha_carbons.build_peptides(chain2)
-    chain2_carbons=chain2_carbons.get_sequence()
+    chain2_carbons=chain2_carbons[0].get_sequence()
 
     alignment=pairwise2.align.globalxx(chain1_carbons,chain2_carbons)
 
@@ -199,19 +198,25 @@ def superimpose_chains(ref_structure,alt_structure,threshold):
     superimpositions={}
     best_RMSD=""
     ref_chains=[x for x in ref_structure.get_chains()]
-    alt_chains=[x for x in alt_strucuture.get_chains()]
+    alt_chains=[x for x in alt_structure.get_chains()]
     sup=Superimposer() # Superimposer from Biopython
 
     for ref_chain in ref_chains:
         for alt_chain in alt_chains:
             if align_chains(ref_chain,alt_chain) > 0.95: # for the similar chains
-                ref_atoms=ref_chain.get_atoms()
-                alt_atoms=alt_chain.get_atoms()
-                sup.set_atoms(ref_atoms,alt_atoms)  # retrieve rotation and translatkon matrix
+                ref_atoms=list(ref_chain.get_atoms())
+                alt_atoms=list(alt_chain.get_atoms())
+                sup.set_atoms(ref_atoms,alt_atoms)  # retrieve rotation and translation matrix
                 RMSD=sup.rms                        # get RMSD for superimposition
-                if not RMSD.rms > threshold:
-                    if best_RMSD="" or RMSD < best_RMSD:
+
+                if RMSD < threshold:
+                    if not best_RMSD or RMSD < best_RMSD:
                         best_RMSD=RMSD
-                    superimpositions[(ref_chain.id,sample_chain.id)]=sup # add superimposition to dictionary
-    if not superimposition =={}
+                    superimpositions[(ref_chain.id,alt_chain.id)]=sup # add superimposition to dictionary
+
+    if bool(superimpositions) == True: #If we are able to superimpose any chain
+        superimpositions=sorted(superimpositions.items(), key=lambda x:x[1].rms) #sort the superimpositions by RMSD
         return (superimpositions,best_RMSD)
+
+# def clash_comparison()
+#     """
