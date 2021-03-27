@@ -1,4 +1,4 @@
-import os, sys, gzip, argparse, re, glob
+import os, sys, gzip, argparse, re, glob, string
 
 from Bio.PDB import *
 from Bio import pairwise2
@@ -188,7 +188,46 @@ def align_chains(chain1,chain2):
 
     return alig_score
 
-def superimpose_chains(ref_structure,alt_structure,threshold):
+def alpha_carbons_retriever(chain, options_verbose):
+    """
+    Get alpha Carbons from input chains (CA for preotein sequence and C4' for DNA/RNA).
+
+    Argument: chain class with the atoms
+
+    Returns: - list of CA or C4 atoms
+             - class of molecule we are working with
+
+    """
+    nucleic_acids = ['DA','DT','DC','DG','DI','A','U','C','G','I']
+    RNA = ['A','U','C','G','I']
+    DNA = ['DA','DT','DC','DG','DI']
+    atoms = []
+
+    for residue in chain:
+        res_type = residue.get_resname().strip()       # Get residue name
+        if residue.get_id()[0] == " ":                 #Check if we are dealing with and HET entry
+
+            if res_type not in nucleic_acids:         # If residue is not a nucleic acid
+                if 'CA' not in residue:                 # If there are no alpha carbons
+                    if options_verbose:                 # And the verboes option has been set in the function: print a message
+                                                        # informing about not having CA
+                        sys.stderr.write("This residue %d %s doest not have an alpha carbon" % (residue.get_id()[1], res_type))
+
+                else:                                   # If there are alfa cabrons
+                    atoms.append(residue['CA'])
+                    molecule='Protein'
+
+            elif res_type in DNA:       #Otherwise, if the residue is a deoxynucleic acid
+                molecule = 'DNA'
+                atoms.append(res['C4\''])
+
+            elif res_type in RNA:       #Finally, if the residue is a nucleic acid
+                molecule = 'RNA'
+                atoms.append(res['C4\''])
+
+    return(atoms, molecule)      #Return the list of alpha carbon atoms and the molecule type
+
+def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
     """
     Core function to firstly align chains from reference and alternative model.
     Secondly, for those chains found to be similar, superimpose them and obtain
@@ -204,8 +243,8 @@ def superimpose_chains(ref_structure,alt_structure,threshold):
     for ref_chain in ref_chains:
         for alt_chain in alt_chains:
             if align_chains(ref_chain,alt_chain) > 0.95: # for the similar chains
-                ref_atoms=list(ref_chain.get_atoms())
-                alt_atoms=list(alt_chain.get_atoms())
+                ref_atoms, ref_molecule = alpha_carbons_retriever(ref_chain, options_verbose)
+                alt_atoms, alt_molecule = alpha_carbons_retriever(alt_chain, options_verbose)
                 sup.set_atoms(ref_atoms,alt_atoms)  # retrieve rotation and translation matrix
                 RMSD=sup.rms                        # get RMSD for superimposition
 
@@ -218,5 +257,27 @@ def superimpose_chains(ref_structure,alt_structure,threshold):
         superimpositions=sorted(superimpositions.items(), key=lambda x:x[1].rms) #sort the superimpositions by RMSD
         return (superimpositions,best_RMSD)
 
-# def clash_comparison()
-#     """
+def create_ID(IDs_present):
+    """
+    Create new ID to make sure it is a non-taken ID
+    Input: list of IDs already occupied
+    Return: new ID
+    """
+
+    Up = list(string.ascii_uppercase)
+    Low = list(string.ascii_lowercase)
+    Dig = list(string.digits)
+    possibilities = set(Up+Low+Dig) # set of all acceptable IDs that are possible
+
+    if len(IDs_present)<62:
+        possibilities.difference_update(set(IDs_present)) # update possibilities set by substracting taken ID
+        return list(possibilities)[0]
+
+    elif len(IDs_present)>=62: # as soon as all possibilities from the set are taken
+        for character in possibilities:
+            for character2 in possibilities:
+                ID = character + character2     # combine letters to createe new ID
+                if ID not in IDs_present:       # test if new ID already taken
+                    return
+                else:
+                    continue

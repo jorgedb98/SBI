@@ -218,36 +218,55 @@ if __name__=="__main__":
 # #             sys.stderr.write("Input files contain %d homodimers and %d heterodimers\n" % (len(structure_data["homodimers"],len(structure_data["heterodimers"])))
 
 
-#### TESTING AITORS NEW CODE
+#### TESTING AITORS NEW CODE :D
     het_list = list(structure_data["heterodimers"].keys())
     heterodimers = structure_data["heterodimers"]
 
-# SUPERIMPOSE CHAINS WITH HIGH ALIGNMENT
+
+# SUPERIMPOSE C-alphas of CHAINS WITH HIGH ALIGNMENT
     ref_structure = heterodimers[het_list[0]] # get first pair as reference structure
+    # print(heterodimers[het_list[0]])
     for i in range(1,len(het_list)):
         moving_structure = heterodimers[het_list[i]]
-        superimposition = superimpose_chains(ref_structure, moving_structure,2)
-
+        superimposition = superimpose_chains(ref_structure, moving_structure,2, options.verbose)
         if bool(superimposition) == False:
-            to_end=het_list.pop(0) # pop the first heterodimer pair if no superimposition could be made
-            het_list.append(to_end) # Append it to the end of the list to see if it can be superimposed latter
+            # to_end=het_list.pop(0) # pop the first heterodimer pair if no superimposition could be made
+            # het_list.append(to_end) # Append it to the end of the list to see if it can be superimposed latter
+            # print("before",i)
+            # i=i-1
+            # print("after",i)
             continue
-    #Program continues if there are superimpositions
 
+    #Program continues if there are superimpositions
         for possibility, sup in superimposition[0]: #Iterate over the dictionary with superimpositions, not the RMSD
-            added_chain = [chain for chain in moving_structure if chain.id != possibility[1]][0]
+            added_chain = [chain for chain in moving_structure.get_chains() if chain.id != possibility[1]][0]
             sup.apply(added_chain.get_atoms()) # apply rotation matrix to moving structure
-            ref_atoms = list(ref_structure.get_atoms()) # atoms of reference model
-            moving_atoms = list(added_chain.get_atoms()) # atoms of moving model
-            print(moving_atoms)
-            # Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
-            # clashes = []
-            # for atoms in moving_atoms:
-            #     atoms_clashed = Neighbor.search(atoms.coord,5) # check for atoms overlapping between moving structure and object Neighbor from reference structure
-            #     # print(atoms_clashed)
-            #     if len(atoms_clashed) > 0:				#if there are clashes
-            #         clashes.extend(atoms_clashed)       # add clashing atoms to clashlist
-            #
-            #
-            #     # print(clashes)
-            # print(len(clashes))
+
+            moving_atoms, moving_molecule = alpha_carbons_retriever(added_chain, options.verbose)
+
+            ref_atoms=[]
+            for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
+                ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
+
+            Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
+            clashes = 0
+            for atom in moving_atoms: #Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
+                atoms_clashed = Neighbor.search(atom.coord,5)
+
+                if len(atoms_clashed) > 0:
+                    clashes+=len(atoms_clashed)
+
+            if clashes < 30:   #If the clashes do not exceed a certain threshold add the chain to the model
+                present=[chain.id for chain in ref_structure.get_chains()]
+                if added_chain.id in present:
+                    added_chain.id= create_ID(present) #Change the id so it does not clash with the current chain ids in the PDB structure
+                ref_structure[0].add(added_chain)
+                print(added_chain.id)
+
+
+                #Save the structure
+                # If number of ids taken is lower or eq to 62
+                io=PDBIO()
+                io.set_structure(ref_structure[0])
+                io.save("test.pdb")
+                #else cannot save as pdb -> save as MMCIFIO
