@@ -70,6 +70,10 @@ if __name__=="__main__":
         except NotADirectoryError as e:
             sys.stderr.write("Stechiometry option does not correspond to an existing directory. Please try again.\n")
             exit()
+    else:
+        if options.verbose:
+            sys.stderr.write("You have not provided a stoichiometry. Your model will be built using the default value")
+
 
 
 #Check the heterodimer structures to find the same chain under different chain ids

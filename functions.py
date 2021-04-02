@@ -13,8 +13,6 @@ def read_pdb_files(pdb_files, options_verbose):
     Dictionary with three elements: Chain ids (2) and the structure """
 
     dict_to_return={}
-    homodimer_dict={}
-    heterodimer_dict={}
     pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
     alpha_carbons=CaPPBuilder()
 
