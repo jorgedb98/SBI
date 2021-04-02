@@ -39,6 +39,13 @@ parser.add_argument('-v','--verbose',
                     action="store_true",
                     help="Set the value to true if you want to console output of the progress")
 
+parser.add_argument('-m','--max_iter',
+                    default=100,
+                    dest="max_iterations",
+                    action="store",
+                    type=int,
+                    help="The number maximum iterations the program will try to expand the structure. \
+                        WARNING: If a high number of files is provided, the default value is set to 100, thus it may leave the structure unfinished.")
 options=parser.parse_args()
 
 
@@ -66,7 +73,7 @@ if __name__=="__main__":
             with open(options.stechiometry, "r") as file:
                 for line in file:
                     a=line.strip().split(":")
-                    stech_file[a[0]]=a[1]
+                    stech_file[a[0]]=int(a[1])
         except NotADirectoryError as e:
             sys.stderr.write("Stechiometry option does not correspond to an existing directory. Please try again.\n")
             exit()
@@ -76,8 +83,12 @@ if __name__=="__main__":
         stech_file={}
         for key in structure_data:
             stech_file[key]=1
+    print(stech_file)
 
     if interaction == "PP": # When files contain PP complex
+        if options.verbose:
+            sys.stderr.write("The files provided contain a Protein-Protein interaction.")
+
         prot_list = list(structure_data.keys())
         refid=prot_list.pop(0)
         prot_list.append(refid)
@@ -85,20 +96,25 @@ if __name__=="__main__":
 
         it_count=0
 
-    # SUPERIMPOSE C-alphas of those CHAINS WITH HIGH ALIGNMENT
-        print(structure_data)
+        # SUPERIMPOSE C-alphas of those CHAINS WITH HIGH ALIGNMENT
         ref_structure = structure_data[refid] # Get first pair as reference structure
         nc=2
         while(nc<=sum(list(stech_file.values()))):    # Iterate while number of chains is lower than sum of number of chains in stech file
             moveid=prot_list.pop(0)
-
+            if moveid not in stech_file:
+                moveid=""
+                continue
             if not moveid in current_stech:                 # If the count for the current structure id is not initialised, start it
                 current_stech[moveid]=0
             moving_structure = structure_data[moveid]
             superimposition = superimpose_chains(ref_structure, moving_structure, 2, options.verbose)
+            current_stech[moveid]+=1
+            nc +=1
             if current_stech[moveid] != stech_file[moveid]:   # If structure not as in stechiometry
-                prot_list.append(moveid)                  # Append it to the end of the list to see if it can be superimposed later
-            if bool(superimposition) == False:        # If no superimposition was made, continue to next structure
+                prot_list.append(moveid)                      # Append it to the end of the list to see if it can be superimposed later
+            if bool(superimposition) == False:                # If no superimposition was made, continue to next structure
+                it_count+=1                                   # increase count of iterations if no iteration was found
+                prot_list.append(moveid)                      # if no superimposition found, bring current moving structure to end of list
                 continue
 
         #Program continues if there are superimpositions
@@ -125,156 +141,22 @@ if __name__=="__main__":
                     if added_chain.id in present:
                         added_chain.id= create_ID(present) #Change the id so it does not clash with the current chain ids in the PDB structure
                     ref_structure[0].add(added_chain)
-                    print(added_chain.id)
+                    nc+=1
 
-
+                it_count+=1
+                if it_count == options.max_iterations:
+                    break
                     #Save the structure
                     # If number of ids taken is lower or eq to 62
-                    io=PDBIO()
-                    io.set_structure(ref_structure[0])
-                    io.save("test.pdb")
-                    #else cannot save as pdb -> save as MMCIFIO
+        io=PDBIO()
+        io.set_structure(ref_structure[0])
+        io.save("test_ourstc.pdb")
+        #else cannot save as pdb -> save as MMCIFIO
 
-    # else: # when file contains NP complex
+    elif interaction == "NP":  # when file contains NP complex
+        if options.verbose:
+            sys.stderr.write("The files provided contain a Nucleotide-Protein interaction.")
 
 
-        # alpha_carbons=CaPPBuilder()
-        # heterodimers=structure_data["heterodimers"]
-        # heterodimer_list=list(heterodimers.keys()) # List holding the files id like "A_B"
-        # # print(structure_data)
-
-        # hold heterodimer pairwise interaction in list chains1 and chains2
-        # for j in range(len(heterodimer_list)-1):
-        #     # print("j:",j)
-        #     #print("do you eter here?")
-        #     chains1=heterodimers[heterodimer_list[j]].get_chains()
-        #     # print(list(chains1))
-        #     chains1=heterodimers[heterodimer_list[j]].get_chains()
-        #
-        #     ##################################################
-        #
-        #
-        #     for i in range(j+1,len(heterodimer_list)):
-        #         #chain.id=chain.id+i
-        #         # access the two chains in each heterodimer structure
-        #         chains1=heterodimers[heterodimer_list[j]].get_chains()
-        #         for chain in chains1:
-        #             #print(heterodimer_list[j])
-        #             chain_alpha = alpha_carbons.build_peptides(chain)
-        #             chain_alpha = chain_alpha[0].get_sequence()
-        #             chains2=heterodimers[heterodimer_list[i]].get_chains()
-        #             # print(chains2)
-        #             for chain2 in chains2:
-        #
-        #                 # print(chain, chain2)
-        #                 #print(heterodimer_list[i])
-        #                 chain_alpha2 = alpha_carbons.build_peptides(chain2)
-        #                 chain_alpha2 = chain_alpha2[0].get_sequence()
-        #
-        #                 #If the chains share the same id, do not compare them since they should be similar
-        #                 if True: #chain.id == chain2.id:
-        #                     alignment = pairwise2.align.globalxx(chain_alpha, chain_alpha2)
-        #                     alig_score=alignment[0][2]/max(len(chain_alpha),len(chain_alpha2))
-        #                     # print(str(chain.id)+ "\t" + chain2.id + "\t" + str(alig_score))
-        #                     if alig_score > 0.95:
-        #
-        #                         if not chain2.id in same_chains:
-        #                             # save same sequences in dictionary with 2. chainid as key and first chainid as value
-        #                             same_chains[chain2.id]=chain.id
-
-# #Process every scenario differently
-#     sup = Superimposer()
-#     print(structure_data)
-# #Easiest one: All homodimers and no heterodimers
-#     if "homodimers" in structure_data.keys() and not "heterodimers" in structure_data.keys():
-#         if options.verbose:
-#             sys.stderr.write("Input files contain %d homodimers and no heterodimers\n" % len(structure_data["homodimers"]))
-#
-#         #take one chain as fixed list of atoms
-#         #superimpose another binary interaction to the fixed chain using biopython superimposer
-#         homodimer_dict=structure_data["homodimers"]
-#         ref_model = homodimer_dict[list(homodimer_dict.keys())[0]]
-#
-#         homodimer_transformed=transform_to_structure(homodimer_dict,"homodimers")
-#
-#         macrocomplex=Structure.Structure("macrocomplex")
-#         macrocomplex.add(Model.Model(0))
-#         ref_model = homodimer_transformed[0] # define reference model (first element)
-#         macrocomplex.add(list(ref_model.get_chains())[0])
-#         macrocomplex.add(list(ref_model.get_chains())[1])
-#
-#         for alt_model in homodimer_transformed:
-#             ref_atoms = []
-#             alt_atoms = []
-#             for (ref_chain, alt_chain) in zip(ref_model, alt_model):
-#                 for ref_res, alt_res in zip(ref_chain, alt_chain):
-#                     if ref_res.resname == alt_res.resname and ref_res.id == alt_res.id:
-#                         ref_atoms.append(alt_res['CA'])
-#                         alt_atoms.append(alt_res['CA'])
-#
-#             sup.set_atoms(ref_atoms, alt_atoms)
-#
-#             if ref_model.id == alt_model.id:
-#     	        #Check for self/self get zero RMS, zero translation
-#     	        #and identity matrix for the rotation.
-#                 assert numpy.abs(sup.rms) < 0.0000001
-#                 assert numpy.max(numpy.abs(sup.rotran[1])) < 0.000001
-#                 assert numpy.max(numpy.abs(sup.rotran[0]) - numpy.identity(3)) < 0.000001
-#             else:
-#     	        #Update the structure by moving all the atoms in
-#     	        #this model (not just the ones used for the alignment)
-#                 sup.apply(alt_model.get_atoms())
-#                 alt_model.detach_child(list(alt_model.get_chains())[0].id)
-#                 sys.stderr.write("RMSD(first model, model %i) = %0.2f" % (alt_model.id, sup.rms))
-#
-#
-#     # print(same_chains) # Checkpoint: same_chains{} holds the ids to chains from different interactions that have over 95% similarity (same ids like "A:A" not inclued)
-#
-# # All heterodimers:
-#     elif "heterodimers" in structure_data.keys() and not "homodimers" in structure_data.keys():
-#         print("it enters here")
-#         if options.verbose:
-#             sys.stderr.write("Input files contain %d heterodimers and no homodimers\n" % len(structure_data["heterodimers"]))
-#
-#         heterodimer_dict = structure_data["heterodimers"]
-#
-#         ## Set the maximum number of chains the complex will have and get those files that can be useful
-#         if stech_file: # If there is stechiometry file
-#             # max_chains = sum(len(list(stech_file.values()))) # The max number = the sum of stechiometry
-#             print("1", heterodimer_dict)
-#             # get those pairwise interactions that can be used if stechiometry is provided
-#             to_remove=[]
-#             for structure in heterodimer_dict.values():
-#                 chains = [x.id for x in structure.get_chains()]
-#                 if not chains[0] in stech_file.keys() and not chains[1] in stech_file.keys():
-#                     if not chains[0] in stech_file.keys() and not chains[1] in same_chains.item():
-#                         to_remove.append(structure.id) #del interaction file if neither of the chains can be superimposed
-#                 elif not chains[0] in stech_file.keys():
-#                     if not chains[0] in same_chains.item():
-#                         to_remove.append(structure.id)
-#                 elif not chains[1] in stech_file.keys():
-#                     if not chains[1] in same_chains.items():
-#                         to_remove.append(structure.id)
-#
-#             for id in to_remove:
-#                 del heterodimer_dict[id]
-#
-#             print("2", str(same_chains))
-#
-#         else: # If not stechiometry provided
-#             max_chains = 2*len(heterodimer_dict.keys()) # The max number = twice the number of heterodimer files
-#
-#
-#         heterodimer_transformed = transform_to_structure(heterodimer_dict, "heterodimer")
-#
-#         # for heterodimers in len(heterodimer_dict.items()): # iterate over list of structure using each as ref model
-#         #     ref_model = heterodimer_transformed[heterodimer]
-#         #     i = 0
-#         #     while i < max_chains: # Iterate while number of max chains is not achieved
-#
-#
-#  #
-# # #Homodimers and heterodimer
-# #     else:
-# #         if options.verbose:
-# #             sys.stderr.write("Input files contain %d homodimers and %d heterodimers\n" % (len(structure_data["homodimers"],len(structure_data["heterodimers"])))
+    else:
+        sys.stderr.write("We are so sorry to tell you your files don't have Protein-Protein nor Nucleotide-Protein interactions :(")
