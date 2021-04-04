@@ -1,4 +1,7 @@
-test
-say something in german if you can read this :P
-guten Morgen!
-Can read it
+
+For PP we expect the researchers to provide the pdb file as pdb containing 2 chains from the protein
+
+
+For Nuc-Peptide we expect the researchers to provide the pdb file as: chain1=peptide chain2+chain3 DNA or chain2=RNA
+  1. compare DNAs and align
+  if alignment over 95%, superimpose and make it new ref structure

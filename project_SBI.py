@@ -10,7 +10,7 @@ requiredNamed.add_argument('-i','--input',
                     required=True,
                     dest="input",
                     action="store",
-                    help='file directory. The files that will be sought for must have the format <name>_<chain1>_<chain2>.pdb. Files can be compressed (gz) or not. ',
+                    help='file directory. The files that will be sought for must have the format .pdb. ',
                     type=dir_path)
 
 parser.add_argument('-s', '--stechiometry',
@@ -83,7 +83,7 @@ if __name__=="__main__":
         stech_file={}
         for key in structure_data:
             stech_file[key]=1
-    print(stech_file)
+    #print(stech_file)
 
     if interaction == "PP": # When files contain PP complex
         if options.verbose:
@@ -110,14 +110,12 @@ if __name__=="__main__":
             superimposition = superimpose_chains(ref_structure, moving_structure, 2, options.verbose)
             current_stech[moveid]+=1
             nc +=1
-            if current_stech[moveid] != stech_file[moveid]:   # If structure not as in stechiometry
-                prot_list.append(moveid)                      # Append it to the end of the list to see if it can be superimposed later
             if bool(superimposition) == False:                # If no superimposition was made, continue to next structure
                 it_count+=1                                   # increase count of iterations if no iteration was found
                 prot_list.append(moveid)                      # if no superimposition found, bring current moving structure to end of list
                 continue
 
-        #Program continues if there are superimpositions
+            #Program continues if there are superimpositions
             for possibility, sup in superimposition[0]: #Iterate over the dictionary with superimpositions, not the RMSD
                 added_chain = [chain for chain in moving_structure.get_chains() if chain.id != possibility[1]][0]
                 sup.apply(added_chain.get_atoms()) # apply rotation matrix to moving structure
@@ -143,9 +141,12 @@ if __name__=="__main__":
                     ref_structure[0].add(added_chain)
                     nc+=1
 
-                it_count+=1
-                if it_count == options.max_iterations:
-                    break
+            if current_stech[moveid] != stech_file[moveid]:   # If structure not as in stechiometry
+                prot_list.append(moveid)                      # Append it to the end of the list to see if it can be superimposed later
+
+            it_count+=1
+            if it_count == options.max_iterations:
+                break
                     #Save the structure
                     # If number of ids taken is lower or eq to 62
         io=PDBIO()
@@ -157,6 +158,44 @@ if __name__=="__main__":
         if options.verbose:
             sys.stderr.write("The files provided contain a Nucleotide-Protein interaction.")
 
+        structure_list=list(structure_data.keys())
+        refid=structure_list.pop(0)
+        structure_list.append(refid)
+        current_stech={refid:1}
 
+        it_count=0
+
+        # SUPERIMPOSE C-alphas of those CHAINS WITH HIGH ALIGNMENT
+        ref_structure = structure_data[refid]       # get first pair as reference structure
+        ref_dna=list(ref_structure.get_chains())[1]   # in the pdb file: 2nd chain as ref DNA
+        ref_dna=[x.get_resname()[2] for x in ref_dna]
+        ref_dna=''.join(ref_dna)
+        nc=2
+        # new_dna = ref_dna.replace(" ", "")
+        # data_splited = re.findall('..',new_dna)
+        print(len(ref_dna))
+        while (nc <= sum(list(stech_file.values()))):   # as long as we need more chains to fullfill the stechiometry
+            moveid=structure_list.pop(0)
+            if moveid not in stech_file:
+                moveid=""
+                continue
+            if not moveid in current_stech:                 # If the count for the current structure id is not initialised, start it
+                current_stech[moveid]=0
+            moving_structure = structure_data[moveid]
+            move_dna=list(moving_structure.get_chains())[1]
+            move_dna=[x.get_resname()[2] for x in move_dna]
+            alignment = align_chains(ref_dna, ''.join(move_dna))   # align DNA strands
+            print(alignment)
+            if alignment < 0.75:                                     #
+                move_dna=list(moving_structure.get_chains())[2]
+                move_dna=[x.get_resname()[2] for x in move_dna]          # If the two seq do not align
+                alignment2=align_chains(ref_dna, ''.join(move_dna))  # compare to the reverse DNA strand
+                print(alignment2)
+                if alignment2 <0.75:
+                    structure_list.append(moveid)
+                    continue
+            ref_dna+=''.join(move_dna)
+
+            nc+=1
     else:
         sys.stderr.write("We are so sorry to tell you your files don't have Protein-Protein nor Nucleotide-Protein interactions :(")

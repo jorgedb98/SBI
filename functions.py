@@ -19,14 +19,14 @@ def read_pdb_files(pdb_files, options_verbose):
     #homodimer_dict={}
     #heterodimer_dict={}
     pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
-    alpha_carbons=CaPPBuilder()
+    # alpha_carbons=CaPPBuilder()
 
     for file in pdb_files:
         id=file[:-4]
         structure=pdb_parser.get_structure(id,file)
         chains_ids=''.join([chain.id for chain in structure.get_chains()])
         chains=[]
-        alpha_carbon_chains=[]
+        alpha_carbon_chains=0
 
         #Obtain the alpha carbon structure of each chain
         removeable=[]
@@ -42,12 +42,13 @@ def read_pdb_files(pdb_files, options_verbose):
             chains.append(chain)
 
         #Finally, obtain the alpha carbon chain and store it
-        #Check if the length of the polypeptide chain is long enough to not be considered a ligand/cofactor
-            if len(chain)<=25:
+        #Check if the length of the polypeptide chain is long enough to not be considered a ligand/cofactor (not for nucleotides)
+            if len(chain)<=25 and len(next(chain.get_residues()).get_resname())<3:
                 structure[0].detach_child(chain.id)
             else:
-                chain_alpha = alpha_carbons.build_peptides(chain)
-                alpha_carbon_chains.append(chain_alpha[0].get_sequence())
+                alpha_carbon_chains+=1          # counter for number of structures
+                # chain_alpha = alpha_carbons.build_peptides(chain)
+                # alpha_carbon_chains.append(chain_alpha[0].get_sequence())
 
 
         # Check the if we are working with P-Pinteraction or P-Nuc interactions:
@@ -55,14 +56,14 @@ def read_pdb_files(pdb_files, options_verbose):
         chain_type = alpha_carbons_retriever(key_chain, options_verbose)[1]
 
         if chain_type =="Protein":               # If P-P interaction, we need to have binary interactions (2 CA lists)
-            if len(alpha_carbon_chains)!= 2:
+            if alpha_carbon_chains!= 2:
                 if options_verbose:
                     sys.stderr.write("File %s does not have right input format." % (file))
                 continue
             dict_with_PP[id]=structure
 
         else:
-            if len(alpha_carbon_chains)!= 3:    # If P-Nuc interaction, we need to have 3 different CAs in list (Protein, 1st DNA and 2nd DNA).
+            if alpha_carbon_chains != 3:        # If P-Nuc interaction, we need to have 3 different Seqs in list (Protein, 1st DNA and 2nd DNA).
                 if options_verbose:
                     sys.stderr.write("File %s does not have right input format." % (file))
                 continue
@@ -74,27 +75,6 @@ def read_pdb_files(pdb_files, options_verbose):
     else:
         return (dict_with_NP,"NP")
 
-
-    #================THIS WAS THE CODE USED TO SEPERATE INTO HOMO AND HETERODIMERS (taken out 2.April)================
-    #     chain_identity = sequence_alignment(alpha_carbon_chains[0], alpha_carbon_chains[1])
-    #
-    #     #check binary interactions and add to homo- or heterodimer dictionary (95% similarity threshold)
-    #     if chain_identity > 0.95:
-    #         homodimer_dict[id]=structure
-    #     else:
-    #         heterodimer_dict[id]=structure
-    #
-    # if (len(homodimer_dict)==0) and (len(heterodimer_dict)==0):
-    #     sys.stderr.write("No binary interactions were found")
-    #     exit()
-    # elif (len(homodimer_dict)==0):
-    #     dict_to_return["heterodimers"]=heterodimer_dict
-    # elif (len(heterodimer_dict)==0):
-    #     dict_to_return["homodimers"]=homodimer_dict
-    # else:
-    #     dict_to_return["heterodimers"]=heterodimer_dict
-    #     dict_to_return["homodimers"]=homodimer_dict
-    # return dict_to_return
 
 #===================================================================
 
@@ -129,25 +109,25 @@ def alpha_carbons_retriever(chain, options_verbose):
 
             elif res_type in DNA:       #Otherwise, if the residue is a deoxynucleic acid
                 molecule = 'DNA'
-                atoms.append(res['C4\''])
+                atoms.append(residue['C4\''])
 
             elif res_type in RNA:       #Finally, if the residue is a nucleic acid
                 molecule = 'RNA'
-                atoms.append(res['C4\''])
+                atoms.append(residue['C4\''])
 
-    return(atoms, molecule)      #Return the list of alpha carbon atoms and the molecule type
+    return(atoms, molecule)      #Return the list of alpha carbon atoms and the molecule types
 
 #===================================================================
 
-def sequence_alignment(chain1,chain2):
-    """Comparing if the pairwise interaction holds a homodimer or heterodimer"""
-    align=pairwise2.align.globalxx(chain1,chain2)
-    identity=align[0][2]/max(len(chain1),len(chain2))
-    return identity
-
-
-    alignment = pairwise2.align.globalxx(sequence1, sequence2)
-    return alignment
+# def sequence_alignment(chain1,chain2):
+#     """Comparing if the pairwise interaction holds a homodimer or heterodimer"""
+#     align=pairwise2.align.globalxx(chain1,chain2)
+#     identity=align[0][2]/max(len(chain1),len(chain2))
+#     return identity
+#
+#
+#     alignment = pairwise2.align.globalxx(sequence1, sequence2)
+#     return alignment
 #===================================================================
 
 def dir_path(string):
@@ -180,15 +160,19 @@ def check_files(path):
     """
     A function to check whether PDB input files have correct format
     """
+
     work_files=[]
     for file in os.listdir(path):
         if file.endswith(".pdb"):
             work_files.append(file)
+
+
     if not work_files:
 #    if my_pattern.match(file) == None:
         raise ValueError("Check the PDB input files format")
     else:
         os.chdir(path)
+        # print(len(work_files))
         return work_files
 #===================================================================
 
@@ -205,10 +189,23 @@ def output_dir(string, options_force):
 
 #===================================================================
 
-def align_chains(chain1,chain2):
+def align_chains(chain1, chain2):
+    """
+    Run alignment for two chains of any type
+    Return alignment score
+    """
+    alignment=pairwise2.align.globalxx(chain1,chain2)
+    alig_score=alignment[0][2]/max(len(chain1),len(chain2))
+
+    return alig_score
+
+
+#===================================================================
+
+def align_chains_peptides(chain1,chain2):
     """
     A function aligning two chains with each other
-    Returns the final alignment score of both chains
+    Returns the final alignment score of both peptidic chains
     """
     alpha_carbons=CaPPBuilder()
 
@@ -218,11 +215,11 @@ def align_chains(chain1,chain2):
     chain2_carbons=alpha_carbons.build_peptides(chain2)
     chain2_carbons=chain2_carbons[0].get_sequence()
 
-    alignment=pairwise2.align.globalxx(chain1_carbons,chain2_carbons)
+    # alignment=pairwise2.align.globalxx(chain1_carbons,chain2_carbons)
+    #
+    # alig_score=alignment[0][2]/max(len(chain1_carbons),len(chain2_carbons))
 
-    alig_score=alignment[0][2]/max(len(chain1_carbons),len(chain2_carbons))
-
-    return alig_score
+    return align_chains(chain1_carbons, chain2_carbons)
 
 #===================================================================
 
@@ -242,7 +239,7 @@ def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
 
     for ref_chain in ref_chains:
         for alt_chain in alt_chains:
-            if align_chains(ref_chain,alt_chain) > 0.95: # for the similar chains
+            if align_chains_peptides(ref_chain,alt_chain) > 0.95: # for the similar chains
                 ref_atoms, ref_molecule = alpha_carbons_retriever(ref_chain, options_verbose)
                 alt_atoms, alt_molecule = alpha_carbons_retriever(alt_chain, options_verbose)
                 sup.set_atoms(ref_atoms,alt_atoms)  # retrieve rotation and translation matrix
