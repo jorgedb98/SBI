@@ -36,7 +36,7 @@ The program only accepts __folders as input__. With the input command the user s
 Similarly, the __output parameter__ should lead to a path where a folder containing the output files will be created. In cases were the user wants to create a folder with a name currently in use, please check the __force argument__.
 
 ### Optional Arguments
-__stoichiometry File__
+__stoichiometry file__
 ```
 '-s', '--stoichiometry'
 ```
@@ -50,6 +50,12 @@ Protein-Protein Complex:
 | Example | 1gzx_A_D:3                          | P05412:1                                      |   
 |         | 1gzxA_C:2                           | P15336:3                                      |   
 
+
+__Nucleotide__
+```
+'-n','--nucleotide'
+```
+If the user wants to build a macro complex consisting of a nucleotide sequence, this option will be used to provide the file containing the full nucleotide sequence. This argument is optional, however when it is not provided and the program finds that the pdb files contain nucleotide and peptide sequence, an error will be raised and further execution of the program will be stopped.
 
 ```
 '-f','--force'
@@ -77,18 +83,25 @@ From the general approach, our algorithm would access the input file and look fo
 
 Once the files are chosen, they are processed to extract the information for the sequences using the function `read_pdb_files` available in the script [functions.py](./functions.py). This functions benefits from the `PDB_parser` module in the Biopython package. For each file the structure (containing the id and the file) is extracted and alpha carbons structures are obtained for every chain inside a single file. Besides, the heteroatoms are removed since they may not be meaningful for the final protein structure (for example, water).
 
-Once the heteroatoms are removed and the alpha carbons structures are stored, the sequence for the latter is obtained. In order to avoid maching complexes out of ligands and cofactors, we set a threshold of 25 residues lenght below which we will not use the given protein for our study.
+Once the heteroatoms are removed and the alpha carbons structures are stored, the sequence for the latter is obtained. In order to avoid matching complexes out of ligands and cofactors, we set a threshold of 25 residues lenght below which we will not use the given protein for our study.
 
-Once this is done, the program will differenciate between protein-protein and nucleic acids-protein input files. This is done by calling to another function developed called `alpha_carbon_retriever`. This function takes as input a given chain and processes it in order to determine wheter it is protein or nucleic acid. This is done by looking at the residues in the chains:
+Once this is done, the program will differenciate between protein-protein and nucleic acids-protein input files. This is done by calling to another function developed called `alpha_carbon_retriever`. This function takes as input a given chain and processes it in order to determine wether it is protein or nucleic acid. This is done by looking at the residues in the chains:
 
 - If it has _CA_, then it is taken as protein,
 - If it has _C4_, then it is taken as a DNA, RNA according to the notation ('DA','DT','DC','DG','DI' for DNA and 'A','T','C','G','I' for RNA).
 
 According to this, chain type is selected and the alpha carbo
+
 ### 3.1.1. Protein-protein
 
 
 ### 3.1.2. Protein-Nucleic Acids
+- for RNA and DNA the naming of the files has to be the given format
+__Input folder by the User__
+For the provided input folder from the user, the naming of the files holds more information in this case:
+        {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb
+
+
 
 
 ## 3.2. Biological Problems
@@ -103,8 +116,14 @@ Once two chains that can be superimposed are identified, it is possible to calcu
 
 # 5. Limitations
 We note that our program comes with some limitations.
+First of all, our programm is limited by the fact that, if no stechiometry file is provided by the user, the program will build the macro complex for protein-protein by using each binary interaction once. If a 
+
 
 - for nucleotide protein we expect 1chain = protein, 2.+3.chain=DNA
+
+
+For Clashes, we only look at α-carbons. As discussed in class, the better approach would have been to consider ß-carbons as they indicate the direction of the side chains. To do so, we would have had to filter out, Glycin as it only has a α-carbons.
+
 
 
 # 6. Examples

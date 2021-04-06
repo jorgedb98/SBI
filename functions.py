@@ -1,4 +1,4 @@
-import os, sys, gzip, argparse, glob, string
+import os, sys, gzip, argparse, glob, string, shutil
 
 from Bio.PDB import *
 from Bio import pairwise2
@@ -226,7 +226,7 @@ def align_chains_peptides(chain1,chain2):
 
 def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
     """
-    Core function to firstly align chains from reference and alternative model.
+    Core function to firstly align peptide chains from reference and alternative model.
     Secondly, for those chains found to be similar, superimpose them and obtain
     a dictionary with all the possible superimposition of the chains from the
     two structures (if the superimposition is below a certain RMSD threshold)
@@ -250,7 +250,7 @@ def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
                         best_RMSD=RMSD
                     superimpositions[(ref_chain.id,alt_chain.id)]=sup # add superimposition to dictionary
 
-    if bool(superimpositions) == True: #If we are able to superimpose any chain
+    if bool(superimpositions) == True:                  #If we are able to superimpose any chain
         superimpositions=sorted(superimpositions.items(), key=lambda x:x[1].rms) #sort the superimpositions by RMSD
         return (superimpositions,best_RMSD)
 
@@ -280,3 +280,24 @@ def create_ID(IDs_present):
                     return
                 else:
                     continue
+#========================================================================
+def save_structure(structure, options_output, options_verbose, options_force):
+    """
+    Function saving the generated complexes as pdb files to a folder at the
+    output directory provided by the user
+    If  a folder already exisst at that directory and the force option is selected,
+    it will forcefully overwrite this folder
+    """
+    io=PDBIO()
+    io.set_structure(structure)
+
+    if os.path.exists(options_output):
+        if options_force == True:
+            shutil.rmtree(options_output)
+        else:
+            raise ValueError("Directory already exists. If you would like to replace it, please provide -f option")
+    os.mkdir(options_output)
+    os.chdir(options_output)
+    io.save("final_complex.pdb")
+    if options_verbose:
+            sys.stderr.write("The final complex was saved to %s \n" % (options_output))

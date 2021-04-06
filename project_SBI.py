@@ -46,6 +46,13 @@ parser.add_argument('-m','--max_iter',
                     type=int,
                     help="The number maximum iterations the program will try to expand the structure. \
                         WARNING: If a high number of files is provided, the default value is set to 100, thus it may leave the structure unfinished.")
+
+parser.add_argument('-n','--nuc',
+                    default=None,
+                    dest="nuc",
+                    action="store",
+                    help="Only needed when nucleotide-protein interactions are provided. The path to the file holding the model nucelic acid pdb file (for DNA or RNA) will be stored.")
+
 options=parser.parse_args()
 
 
@@ -149,53 +156,112 @@ if __name__=="__main__":
                 break
                     #Save the structure
                     # If number of ids taken is lower or eq to 62
-        io=PDBIO()
-        io.set_structure(ref_structure[0])
-        io.save("test_ourstc.pdb")
-        #else cannot save as pdb -> save as MMCIFIO
+
+        save_structure(ref_structure[0], options.output, options.verbose, options.force)
 
     elif interaction == "NP":  # when file contains NP complex
         if options.verbose:
             sys.stderr.write("The files provided contain a Nucleotide-Protein interaction.")
 
-        structure_list=list(structure_data.keys())
-        refid=structure_list.pop(0)
-        structure_list.append(refid)
-        current_stech={refid:1}
+        if not options.nuc:             # User did not provide the nucleotide sequence needed for building a complex
+            raise ValueError("It seems you are trying to build a macrocomplex for nucleic acid-protein interacion but you are lacking the reference nucleic acid structure. Please, provide it.")
+        id="ref_dna"
+
+        pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
+
+        ref_dna=pdb_parser.get_structure(id,options.nuc)    # read ref DNA from user input
+        macrocomplex_dict={}                    # dictionary to store all subcomplexes that can be build from the input folder
+        for complex in stech_file.keys():       # for all complexes that will be need for teh stechiometry
+            complex_files=[x for x in structure_data.keys() if x.split('.')[0] == complex]   # if the first name of the complex_id is equal store it to list complex_files
+            ref_structure=structure_data[complex_files.pop(0)]
+            dna_chain=list[ref_structure.get_chains()][1]               # takening the 2nd chain as reference DNA for alignment
+            #dna_chain=x.get_resname() for x in dna_chain]   # getting the residue names
+            dna_chain=''.join([x.get_resname() for x in dna_chain])     # get residue names for DNA strand
+
+            for complex2 in complex_files:      # go through list of proteins in complex_files
+                moving_structure=structure_data[complex2]
+                dna_chain2=list[moving_structure.get_chains()][1]   # get the dna for the moving structure
+                dna_chain2=''.join([x.get_resname() for x in dna_chain])
+                if align_chains(dna_chain,dna_chain2) < 0.8:        # if alignment of the two DNA is below threshold
+                    dna_chain2=list[moving_structure.get_chains()][2]   # compare with the other DNA strand
+                    dna_chain2=''.join([x.get_resname() for x in dna_chain])
+                    if align_chains(dna_chain,dna_chain2) < 0.8:          # if alignment with both DNA strands below threshold
+                        continue                                          # no complex was buil
+
+                sup=Superimposer()                    # alignment is good enough to superimpose complex and complex2
+                dna_atoms=dna_chain.get_atoms()
+                dna_atoms2=dna_chain2.get_atoms()
+                sup.set_atoms(dna_atoms,dna_atoms2)    # retrieve rotation and translation matrix
+                RMSD=sup.rms                        # get RMSD for superimposition
+
+                if RMSD < threshold:            # if RMSD is below threshold, apply superimposition
+                    added_chain= next(moving_structure.get_chains())
+                    sup.apply(added_chain.get_atoms())
+
+                    ref_atoms=[]
+                    for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
+                        ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
+
+                    moving_atoms=added_chain.get_atoms()
+                    Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
+                    clashes = 0
+                    for atom in moving_atoms: #Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
+                        atoms_clashed = Neighbor.search(atom.coord,5)
+
+                        if len(atoms_clashed) > 0:
+                            clashes+=len(atoms_clashed)
+
+                    if clashes < 30:   #If the clashes do not exceed a certain threshold add the chain to the model
+                        present=[chain.id for chain in ref_structure.get_chains()]
+                        if added_chain.id in present:
+                            added_chain.id= create_ID(present) #Change the id so it does not clash with the current chain ids in the PDB structure
+                        ref_structure[0].add(added_chain)
+
+
+        #structure_list=list(structure_data.keys())
+        #refid=structure_list.pop(0)
+        #structure_list.append(refid)
+        #current_stech={refid:1}
 
         it_count=0
 
         # SUPERIMPOSE C-alphas of those CHAINS WITH HIGH ALIGNMENT
-        ref_structure = structure_data[refid]       # get first pair as reference structure
-        ref_dna=list(ref_structure.get_chains())[1]   # in the pdb file: 2nd chain as ref DNA
-        ref_dna=[x.get_resname()[2] for x in ref_dna]
-        ref_dna=''.join(ref_dna)
-        nc=2
+        # ref_structure = structure_data[refid]           # get first pair as reference structure
+        # ref_dna=list(ref_structure.get_chains())[1]     # in the pdb file: 2nd chain as ref DNA
+        # ref_dna=[x.get_resname()[2] for x in ref_dna]
+        # ref_dna=''.join(ref_dna)
+        nc=0
+       # dictionary to store protein-DNA complexes
+
+
         # new_dna = ref_dna.replace(" ", "")
         # data_splited = re.findall('..',new_dna)
-        print(len(ref_dna))
+
         while (nc <= sum(list(stech_file.values()))):   # as long as we need more chains to fullfill the stechiometry
             moveid=structure_list.pop(0)
             if moveid not in stech_file:
                 moveid=""
                 continue
-            if not moveid in current_stech:                 # If the count for the current structure id is not initialised, start it
+            if not moveid in current_stech:                # If the count for the current structure id is not initialised, start it
                 current_stech[moveid]=0
             moving_structure = structure_data[moveid]
             move_dna=list(moving_structure.get_chains())[1]
             move_dna=[x.get_resname()[2] for x in move_dna]
             alignment = align_chains(ref_dna, ''.join(move_dna))   # align DNA strands
-            print(alignment)
+
             if alignment < 0.75:                                     #
                 move_dna=list(moving_structure.get_chains())[2]
                 move_dna=[x.get_resname()[2] for x in move_dna]          # If the two seq do not align
                 alignment2=align_chains(ref_dna, ''.join(move_dna))  # compare to the reverse DNA strand
-                print(alignment2)
+
                 if alignment2 <0.75:
                     structure_list.append(moveid)
                     continue
             ref_dna+=''.join(move_dna)
 
             nc+=1
+
+        save_structure(ref_structure[0], options.output, options.verbose, options.force)
+    #else cannot save as pdb -> save as MMCIFIO
     else:
         sys.stderr.write("We are so sorry to tell you your files don't have Protein-Protein nor Nucleotide-Protein interactions :(")
