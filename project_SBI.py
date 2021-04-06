@@ -201,7 +201,7 @@ if __name__=="__main__":
                     ref_atoms=[]
                     for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
                         ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
-
+#This may be turned into a function
                     moving_atoms=added_chain.get_atoms()
                     Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
                     clashes = 0
