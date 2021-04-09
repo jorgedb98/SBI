@@ -106,7 +106,7 @@ if __name__=="__main__":
         # SUPERIMPOSE C-alphas of those CHAINS WITH HIGH ALIGNMENT
         ref_structure = structure_data[refid] # Get first pair as reference structure
         nc=2
-        while(nc<=sum(list(stech_file.values()))):    # Iterate while number of chains is lower than sum of number of chains in stech file
+        while(nc<=sum(list(stech_file.values()))):    # Iterate while number of chains is lower than SUM of number of chains in stech file
             moveid=prot_list.pop(0)
             if moveid not in stech_file:
                 moveid=""
@@ -133,6 +133,7 @@ if __name__=="__main__":
                 for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
                     ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
 
+## could be function check-clashes (we could include the lines above too )
                 Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
                 clashes = 0
                 for atom in moving_atoms: #Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
@@ -147,6 +148,7 @@ if __name__=="__main__":
                         added_chain.id= create_ID(present) #Change the id so it does not clash with the current chain ids in the PDB structure
                     ref_structure[0].add(added_chain)
                     nc+=1
+## could be function check-clashes end
 
             if current_stech[moveid] != stech_file[moveid]:   # If structure not as in stechiometry
                 prot_list.append(moveid)                      # Append it to the end of the list to see if it can be superimposed later
@@ -159,7 +161,8 @@ if __name__=="__main__":
 
         save_structure(ref_structure[0], options.output, options.verbose, options.force)
 
-    elif interaction == "NP":  # when file contains NP complex
+    #
+elif interaction == "NP":  # when file contains Nucleotide seq
         if options.verbose:
             sys.stderr.write("The files provided contain a Nucleotide-Protein interaction.")
 
@@ -201,8 +204,10 @@ if __name__=="__main__":
                     ref_atoms=[]
                     for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
                         ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
-#This may be turned into a function
+
                     moving_atoms=added_chain.get_atoms()
+
+## could be function check-clashes (we could include the lines above too )
                     Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
                     clashes = 0
                     for atom in moving_atoms: #Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
@@ -216,6 +221,7 @@ if __name__=="__main__":
                         if added_chain.id in present:
                             added_chain.id= create_ID(present) #Change the id so it does not clash with the current chain ids in the PDB structure
                         ref_structure[0].add(added_chain)
+## could be function check-clashes
 
 
         #structure_list=list(structure_data.keys())
@@ -237,20 +243,20 @@ if __name__=="__main__":
         # new_dna = ref_dna.replace(" ", "")
         # data_splited = re.findall('..',new_dna)
 
-        while (nc <= sum(list(stech_file.values()))):   # as long as we need more chains to fullfill the stechiometry
-            moveid=structure_list.pop(0)
-            if moveid not in stech_file:
-                moveid=""
+        while (nc <= sum(list(stech_file.values()))):      # as long as we need more chains to fullfill the stechiometry
+            moveid = structure_list.pop(0)
+            if moveid not in stech_file:                   # if current mov_id not in stechiometry
+                moveid = ""                                # do not use it for complex and go to next id
                 continue
             if not moveid in current_stech:                # If the count for the current structure id is not initialised, start it
-                current_stech[moveid]=0
+                current_stech[moveid] = 0
             moving_structure = structure_data[moveid]
-            move_dna=list(moving_structure.get_chains())[1]
-            move_dna=[x.get_resname()[2] for x in move_dna]
-            alignment = align_chains(ref_dna, ''.join(move_dna))   # align DNA strands
+            move_dna = list(moving_structure.get_chains())[1]      # get second chain of moving_object as DNA
+            move_dna = [x.get_resname()[2] for x in move_dna]      # get residues
+            alignment = align_chains(ref_dna, ''.join(move_dna))   # align with reference DNA
 
-            if alignment < 0.75:                                     #
-                move_dna=list(moving_structure.get_chains())[2]
+            if alignment < 0.75:                                     # if alignment above threshold
+                move_dna=list(moving_structure.get_chains())[2]      #
                 move_dna=[x.get_resname()[2] for x in move_dna]          # If the two seq do not align
                 alignment2=align_chains(ref_dna, ''.join(move_dna))  # compare to the reverse DNA strand
 

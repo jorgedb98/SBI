@@ -251,7 +251,7 @@ def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
                     superimpositions[(ref_chain.id,alt_chain.id)]=sup # add superimposition to dictionary
 
     if bool(superimpositions) == True:                  #If we are able to superimpose any chain
-        superimpositions=sorted(superimpositions.items(), key=lambda x:x[1].rms) #sort the superimpositions by RMSD
+        superimpositions=sorted(superimpositions.items(), key=lambda x:x[1].rms)    #sort the superimpositions by RMSD
         return (superimpositions,best_RMSD)
 
 #===================================================================

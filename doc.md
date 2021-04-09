@@ -83,9 +83,9 @@ From the general approach, our algorithm would access the input file and look fo
 
 Once the files are chosen, they are processed to extract the information for the sequences using the function `read_pdb_files` available in the script [functions.py](./functions.py). This functions benefits from the `PDB_parser` module in the Biopython package. For each file the structure (containing the id and the file) is extracted and alpha carbons structures are obtained for every chain inside a single file. Besides, the heteroatoms are removed since they may not be meaningful for the final protein structure (for example, water).
 
-Once the heteroatoms are removed and the alpha carbons structures are stored, the sequence for the latter is obtained. In order to avoid matching complexes out of ligands and cofactors, we set a threshold of 25 residues lenght below which we will not use the given protein for our study.
+Once the heteroatoms are removed and the alpha carbons structures are stored, the sequence for the latter is obtained. In order to avoid matching complexes out of ligands and cofactors, we set a threshold of 25 residues length below which we will not use the given protein for our study.
 
-Once this is done, the program will differenciate between protein-protein and nucleic acids-protein input files. This is done by calling to another function developed called `alpha_carbon_retriever`. This function takes as input a given chain and processes it in order to determine wether it is protein or nucleic acid. This is done by looking at the residues in the chains:
+Once this is done, the program will differentiate between protein-protein and nucleic acids-protein input files. This is done by calling another function developed named `alpha_carbon_retriever`. This function takes a given chain as input and processes it in order to determine whether it is a protein or nucleic acid. This is done by looking at the residues in the chains:
 
 - If it has _CA_, then it is taken as protein,
 - If it has _C4_, then it is taken as a DNA, RNA according to the notation ('DA','DT','DC','DG','DI' for DNA and 'A','T','C','G','I' for RNA).
@@ -101,13 +101,16 @@ __Input folder by the User__
 For the provided input folder from the user, the naming of the files holds more information in this case:
         {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb
 
+For a complex containing DNA, we take the provided DNA strand as our reference and look for sufficient alignments among the DNA strands in the provided pdb files. As soon as an alignment has been obtained that passes the threshold, we will superimpose the two strands. The program will first compare the forward and then the reversed DNA strand to the reference DNA, if the first strand did not pass the alignment trershold. The threshold for the alignment here is set to 75% as we know that DNA strands can be shorter and thus a higher percentage will rule out many reasonable alignments simply because the compared DNA strand is very short.
+
+Once an alignment was found high enough and the two DNA strands are superimposed, the according protein chain will be add to the reference structure, if no clashes with the so far build reference structure were found. In case, the new protein chain clashes with the already included chains of the reference structure, we will drop the superimposition and move to the next pdb file in the list.
 
 
 
 ## 3.2. Biological Problems
-Recent studies suggest that proteins may not work individually, but they will rather form a complex with other molecules in order to fullfill certain functions. A good examples of this model of interaction can be found in the ribosome or enzymes like the NADH dehydrogenase. While traditional experimental techniques such as x-ray crystallography and nuclear magnetic resonance (NMR) spectroscopy have been crucial in characterising the structure of a great amount of proteins, they have found little success when dealing with macrocomplexes given the large size and structural flexibility these molecules present.
+Past studies suggest that proteins may not work individually, but they will rather form a complex with other molecules in order to full fill certain functions. A classic examples for a model of an interaction can be found for ribosome or enzymes like the NADH dehydrogenase. While traditional experimental techniques such as x-ray crystallography and nuclear magnetic resonance (NMR) spectroscopy have been crucial in characterising the structure of a great amount of proteins, the evidence on structures of macrocomplexes is still scarce given the large size and structural flexibility these molecules present.
 
-However, with the rapid development of computers and the decay in the computational hardware cost, fields such as computational biology have greatly bloomed, and may help us predict the structure of macrocomplexes _1_ in silico _1_ based on the huge amount of data recovered by traditional techniques. Our project takes a simple approach to this problem by employing superimpostion between highly similar chains as a basis. Superimposition is defined as the procedure by which which two molecule structures (two proteins, two DNA/RNA molecules, etc) are placed in space minimizing the distance between the backbone atoms of both structures. If we were to compare sequence alignment with estructural alignment, equivalent residues would be the ones filling the same position in a multiple alignment (according to a sequence similarity score), in structural alignment equivalent residues would be the the closest ones.
+However, with the rapid development of computers and decay in the computational hardware cost, fields such as computational biology have greatly bloomed, and provide promising help in predicting structures of macrocomplexes _1_ in silico _1_ based on the huge amount of data recovered by traditional techniques. Our project takes a simple approach to this problem by employing superimpostion between highly similar chains as a basis. __Superimposition__ is defined as the procedure by which which two molecule structures (two proteins, two DNA/RNA molecules, etc) are placed in space-minimizing the distance between backbone atoms of both structures. If we were to compare sequence alignment with structural alignment, equivalent residues would be the ones filling the same position in a multiple alignment (according to a sequence similarity score), in structural alignment equivalent residues would be the the closest ones.
 
 Once two chains that can be superimposed are identified, it is possible to calculate translation and roation matrices so the coordinate system of both structures are identical. By equating the coordinate system, we are able calculate how diffent the equivalent chains are. There are multiple measurements available to evaluate the structural alignment, but the most simple one, the Root-Mean-Square Deviations (RMSD), was  the one employed in this project. RMSD is based on the average distance between two sets of atoms, usually the backbone atoms (α-carbons in the case of proteins and C4 carbons in DNA/RNA strands) of the superimposed molecules. By convention, bellow a value of 3 both structures will be considered the same.
 
@@ -116,13 +119,11 @@ Once two chains that can be superimposed are identified, it is possible to calcu
 
 # 5. Limitations
 We note that our program comes with some limitations.
-First of all, our programm is limited by the fact that, if no stechiometry file is provided by the user, the program will build the macro complex for protein-protein by using each binary interaction once. If a 
+First of all, the program demands certain formats. As described above, the stechiometry file has to be provided in a certain format depending on whether the user wants to build a protein-protein complex or a nucleotide-protein complex. Additionally, in the case of a nucleotide complex, the chains in the provided pdb files are expected to contain the peptide chain in the first position and then the nucleotide chain(s).
 
+Furthermore, the final complex will be limited if the user does not provide the stechiometry. In this case, the program will build the macro complex for protein-protein by considering each interaction structure only once. If a certain structure should be included more than once in the final model, the user has to indicate this in the stechiometry file.
 
-- for nucleotide protein we expect 1chain = protein, 2.+3.chain=DNA
-
-
-For Clashes, we only look at α-carbons. As discussed in class, the better approach would have been to consider ß-carbons as they indicate the direction of the side chains. To do so, we would have had to filter out, Glycin as it only has a α-carbons.
+We are also aware that, when looking for clashes, the program only compares α-carbons. As discussed in class, the better approach would have been to consider ß-carbons as they provide additional information on the direction of side chains.
 
 
 
@@ -144,7 +145,7 @@ A:2
 B:4
 C:1
 ```
-
+-----------------------TO DO-----------------TO DO-----------------TO DO-----------------------------
 The final command has to be run on the terminal in order to build the macro complex of 1gzx:
 ```
 python3 HERE GOES THE FINAL NAME OF OUR SCRIPT !"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(/&%$%&/(/&%&/())))))"
@@ -152,7 +153,7 @@ python3 HERE GOES THE FINAL NAME OF OUR SCRIPT !"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&
 ```
 
 The ourput is stored at __!"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(__. If everything runs correctly, the model is expected to look something like the following:
-
+------------------------------------------------------------------------------------
 
 ## 6.2. Protein-Nucleotide Complex: 2O61
 [2O61](https://www.rcsb.org/structure/2O61) is an example for a protein-nucleotide complex. The model describes a structure of NFkB, IRF7, IRF3 bound to the interferon-b enhancer. Its 3D is presented below.
@@ -179,11 +180,13 @@ Q14653:4
 When the user decides to provide a the path to the stoichiometry file in his command, the final complex will consist of one sub complex of each of the four first proteins and four times the sub complex Q14653.
 
 The final command run on the terminal to conduct the macrocomplex of 2O61 is:
+-----------------------TO DO-----------------TO DO-----------------TO DO-----------------------------
 ```
 python3 HERE GOES THE FINAL NAME OF OUR SCRIPT !"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(/&%$%&/(/&%&/())))))"
 
 ```
 
-The ourput is stored at __!"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(__. If everything runs correctly, the model is expected to look something like the following:
+The output is stored at __!"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(__. If everything runs correctly, the model is expected to look something like the following:
 
 # ENTER SCREENSHOTS OF OUR MODELS HERE AND FOR 1gzx
+--------------------------------------------------------------------------------------------------------
