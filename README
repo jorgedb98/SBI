@@ -13,9 +13,10 @@ Lili, 9th April:
     - added some limitations
 
   NOTE:
+  What if we have SINGLE strand RNA?
     I noticed 2 things about us seperating into nuc-prot or prot-prot, but maybe I am wrong...
     So first: in functions.py l.66 we check if the pdb holds 2 or 3 chains.
-    But in case of RNA, the pdb would 2 chains (1xProt 1xRNA) since it should not hold a helix, right?
+    But in case of single strand RNA, the pdb would hold 2 chains (1xProt 1xRNA), right?
     So here we would run the same script for prot-prot and rna-prot and only filter ourt dna-prot.
 
     Maybe it would be better to pass the complex type with the alpha_carbons_retriever(), since here

@@ -57,7 +57,7 @@ options=parser.parse_args()
 
 
 if __name__=="__main__":
-
+    absolute_path = os.getcwd()
     try:
         work_files=check_files(options.input)
     except NotADirectoryError as e:
@@ -69,7 +69,7 @@ if __name__=="__main__":
 
 #Get all the files as structures in a dictionary with the pdb parser from the Bio package and the function we built around it
     structure_data, interaction=read_pdb_files(work_files, options.verbose)
-    os.chdir("../") # after processing input files get back to main working directory
+    os.chdir(absolute_path) # after processing input files get back to main working directory
 
 # Process Stoichiometry if provided by User
     if options.stechiometry:
@@ -133,7 +133,7 @@ if __name__=="__main__":
                 for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
                     ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
 
-## could be function check-clashes (we could include the lines above too )
+    # could be function check-clashes (we could include the lines above too )
                 Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
                 clashes = 0
                 for atom in moving_atoms: #Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
@@ -148,7 +148,7 @@ if __name__=="__main__":
                         added_chain.id= create_ID(present) #Change the id so it does not clash with the current chain ids in the PDB structure
                     ref_structure[0].add(added_chain)
                     nc+=1
-## could be function check-clashes end
+        # could be function check-clashes end
 
             if current_stech[moveid] != stech_file[moveid]:   # If structure not as in stechiometry
                 prot_list.append(moveid)                      # Append it to the end of the list to see if it can be superimposed later
@@ -161,10 +161,10 @@ if __name__=="__main__":
 
         save_structure(ref_structure[0], options.output, options.verbose, options.force)
 
-    #
-elif interaction == "NP":  # when file contains Nucleotide seq
+
+    elif interaction == "dNP":          # when file contains DNA chains and protein chain
         if options.verbose:
-            sys.stderr.write("The files provided contain a Nucleotide-Protein interaction.")
+            sys.stderr.write("The files provided contain a double-strand Nucleotide-Protein interaction.")
 
         if not options.nuc:             # User did not provide the nucleotide sequence needed for building a complex
             raise ValueError("It seems you are trying to build a macrocomplex for nucleic acid-protein interacion but you are lacking the reference nucleic acid structure. Please, provide it.")
@@ -172,32 +172,36 @@ elif interaction == "NP":  # when file contains Nucleotide seq
 
         pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
 
-        ref_dna=pdb_parser.get_structure(id,options.nuc)    # read ref DNA from user input
-        macrocomplex_dict={}                    # dictionary to store all subcomplexes that can be build from the input folder
-        for complex in stech_file.keys():       # for all complexes that will be need for teh stechiometry
-            complex_files=[x for x in structure_data.keys() if x.split('.')[0] == complex]   # if the first name of the complex_id is equal store it to list complex_files
-            ref_structure=structure_data[complex_files.pop(0)]
-            dna_chain=list[ref_structure.get_chains()][1]               # takening the 2nd chain as reference DNA for alignment
-            #dna_chain=x.get_resname() for x in dna_chain]   # getting the residue names
-            dna_chain=''.join([x.get_resname() for x in dna_chain])     # get residue names for DNA strand
+        ref_dna = pdb_parser.get_structure(id,options.nuc)    # read ref DNA from user input
+        macrocomplex_dict = {}
+        for complex in stech_file.keys():                     # for all complexes that will be need for the stechiometry
+            complex=complex.split('.')[0]
+            complex_files = [x for x in structure_data.keys() if x.split('.')[0] == complex]   # if the first name of the complex_id is equal store it to list complex_files
+            ref_structure = structure_data[complex_files.pop(0)]
+            dna_chain = list(ref_structure.get_chains())[1]            # takening the 2nd chain as reference DNA for alignment
+            #dna_chain=x.get_resname() for x in dna_chain]             # getting the residue names
+            dna_chain_seq=''.join([x.get_resname() for x in dna_chain])    # get residue names for DNA strand
 
-            for complex2 in complex_files:      # go through list of proteins in complex_files
+            for complex2 in complex_files:                             # go through list of proteins in complex_files
                 moving_structure=structure_data[complex2]
-                dna_chain2=list[moving_structure.get_chains()][1]   # get the dna for the moving structure
-                dna_chain2=''.join([x.get_resname() for x in dna_chain])
-                if align_chains(dna_chain,dna_chain2) < 0.8:        # if alignment of the two DNA is below threshold
-                    dna_chain2=list[moving_structure.get_chains()][2]   # compare with the other DNA strand
-                    dna_chain2=''.join([x.get_resname() for x in dna_chain])
-                    if align_chains(dna_chain,dna_chain2) < 0.8:          # if alignment with both DNA strands below threshold
-                        continue                                          # no complex was buil
+                dna_chain2=list(moving_structure.get_chains())[1]      # get the dna for the moving structure
+                dna_chain2_seq=''.join([x.get_resname() for x in dna_chain2])
+                if align_chains(dna_chain_seq, dna_chain2_seq) < 0.8:           # if alignment of the two DNA is below threshold
+                    dna_chain2=list[moving_structure.get_chains()][2]  # compare with the other DNA strand
+                    dna_chain2_seq=''.join([x.get_resname() for x in dna_chain2])
+                    if align_chains(dna_chain_seq,dna_chain2_seq) < 0.8:       # if alignment with both DNA strands below threshold
+                        continue                                       # no complex was buil
 
-                sup=Superimposer()                    # alignment is good enough to superimpose complex and complex2
-                dna_atoms=dna_chain.get_atoms()
-                dna_atoms2=dna_chain2.get_atoms()
+                sup=Superimposer()                       # alignment is good enough to superimpose complex and complex2
+                dna_atoms=list(dna_chain.get_atoms())    # transform both DNA chains to list
+                dna_atoms2=list(dna_chain2.get_atoms())
+                # print("index", dna_atoms, dna_atoms2))
+                # print(len(dna_atoms2))
+
                 sup.set_atoms(dna_atoms,dna_atoms2)    # retrieve rotation and translation matrix
-                RMSD=sup.rms                        # get RMSD for superimposition
+                RMSD=sup.rms                           # get RMSD for superimposition
 
-                if RMSD < threshold:            # if RMSD is below threshold, apply superimposition
+                if RMSD < threshold:                   # if RMSD is below threshold, apply superimposition
                     added_chain= next(moving_structure.get_chains())
                     sup.apply(added_chain.get_atoms())
 
@@ -229,45 +233,54 @@ elif interaction == "NP":  # when file contains Nucleotide seq
         #structure_list.append(refid)
         #current_stech={refid:1}
 
-        it_count=0
-
-        # SUPERIMPOSE C-alphas of those CHAINS WITH HIGH ALIGNMENT
-        # ref_structure = structure_data[refid]           # get first pair as reference structure
-        # ref_dna=list(ref_structure.get_chains())[1]     # in the pdb file: 2nd chain as ref DNA
-        # ref_dna=[x.get_resname()[2] for x in ref_dna]
-        # ref_dna=''.join(ref_dna)
-        nc=0
+        # it_count=0
+        #
+        # # SUPERIMPOSE C-alphas of those CHAINS WITH HIGH ALIGNMENT
+        # # ref_structure = structure_data[refid]           # get first pair as reference structure
+        # # ref_dna=list(ref_structure.get_chains())[1]     # in the pdb file: 2nd chain as ref DNA
+        # # ref_dna=[x.get_resname()[2] for x in ref_dna]
+        # # ref_dna=''.join(ref_dna)
+        # nc=0
        # dictionary to store protein-DNA complexes
 
 
-        # new_dna = ref_dna.replace(" ", "")
-        # data_splited = re.findall('..',new_dna)
-
-        while (nc <= sum(list(stech_file.values()))):      # as long as we need more chains to fullfill the stechiometry
-            moveid = structure_list.pop(0)
-            if moveid not in stech_file:                   # if current mov_id not in stechiometry
-                moveid = ""                                # do not use it for complex and go to next id
-                continue
-            if not moveid in current_stech:                # If the count for the current structure id is not initialised, start it
-                current_stech[moveid] = 0
-            moving_structure = structure_data[moveid]
-            move_dna = list(moving_structure.get_chains())[1]      # get second chain of moving_object as DNA
-            move_dna = [x.get_resname()[2] for x in move_dna]      # get residues
-            alignment = align_chains(ref_dna, ''.join(move_dna))   # align with reference DNA
-
-            if alignment < 0.75:                                     # if alignment above threshold
-                move_dna=list(moving_structure.get_chains())[2]      #
-                move_dna=[x.get_resname()[2] for x in move_dna]          # If the two seq do not align
-                alignment2=align_chains(ref_dna, ''.join(move_dna))  # compare to the reverse DNA strand
-
-                if alignment2 <0.75:
-                    structure_list.append(moveid)
-                    continue
-            ref_dna+=''.join(move_dna)
-
-            nc+=1
+        # # new_dna = ref_dna.replace(" ", "")
+        # # data_splited = re.findall('..',new_dna)
+        #
+        # while (nc <= sum(list(stech_file.values()))):      # as long as we need more chains to fullfill the stechiometry
+        #     moveid = structure_list.pop(0)                 # take id for move structure from all structures
+        #     if moveid not in stech_file:                   # if current mov_id not in stechiometry
+        #         moveid = ""                                # do not use it for complex and go to next id
+        #         continue
+        #     if not moveid in current_stech:                # If the count for the current structure id is not initialised, start it
+        #         current_stech[moveid] = 0
+        #     moving_structure = structure_data[moveid]
+        #     move_dna = list(moving_structure.get_chains())[1]      # get second chain of moving_object as DNA
+        #     move_dna = [x.get_resname()[2] for x in move_dna]      # get residues
+        #     alignment = align_chains(ref_dna, ''.join(move_dna))   # align with reference DNA
+        #
+        #     if alignment < 0.75:                                     # if alignment below threshold
+        #         move_dna=list(moving_structure.get_chains())[2]      #
+        #         move_dna=[x.get_resname()[2] for x in move_dna]          # If the two seq do not align
+        #         alignment2=align_chains(ref_dna, ''.join(move_dna))  # compare to the reverse DNA strand
+        #
+        #         if alignment2 <0.75:                           # if the second DNA chain has an alignment below threhsold too
+        #             structure_list.append(moveid)              #
+        #             continue
+        #     ref_dna=''.join(move_dna)              #
+        #
+        #     nc+=1
 
         save_structure(ref_structure[0], options.output, options.verbose, options.force)
-    #else cannot save as pdb -> save as MMCIFIO
+        #else cannot save as pdb -> save as MMCIFIO
+
+    elif interaction == "sNP":
+        if options.verbose:
+            sys.stderr.write("The files provided contain a single-strand RNA  Protein interaction.")
+
+        if not options.nuc:             # User did not provide the nucleotide sequence needed for building a complex
+            raise ValueError("It seems you are trying to build a macrocomplex for nucleic acid-protein interacion but you are lacking the reference nucleic acid structure. Please, provide it.")
+
+
     else:
         sys.stderr.write("We are so sorry to tell you your files don't have Protein-Protein nor Nucleotide-Protein interactions :(")

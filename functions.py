@@ -6,16 +6,18 @@ from Bio import pairwise2
 
 
 def read_pdb_files(pdb_files, options_verbose):
-    """Given a pdb file, read it, remove the heteroatoms and create a dictionary with the chain ids and the structure
+    """
+    Given a pdb file, read it, remove the heteroatoms and create a dictionary with the chain ids and the structure. This dictionary also classifies the
+    input in protein-protein interaction, DNA-protein interaction or RNA-protein interaction (this last one, considering if RNA is single-strand or double-strand).
 
-    Input:
-        PDB File (files argument) with a pairwise interaction
+    - Input: PDB File (files argument) with a pairwise interaction
 
-    Output:
-    Dictionary with three elements: Chain ids (2) and the structure """
+    - Output: Dictionary with three elements: Chain ids (2) and the structure
+    """
 
-    dict_with_NP={}
-    dict_with_PP={}
+    dict_with_sNP = {}
+    dict_with_dNP = {}
+    dict_with_PP = {}
     #homodimer_dict={}
     #heterodimer_dict={}
     pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
@@ -55,25 +57,54 @@ def read_pdb_files(pdb_files, options_verbose):
         key_chain = [x for x in structure.get_chains()][1]
         chain_type = alpha_carbons_retriever(key_chain, options_verbose)[1]
 
-        if chain_type =="Protein":               # If P-P interaction, we need to have binary interactions (2 CA lists)
+
+        #print(chain_type)
+        if chain_type == "Protein":               # If P-P interaction, we need to have binary interactions (2 CA lists)
             if alpha_carbon_chains!= 2:
                 if options_verbose:
-                    sys.stderr.write("File %s does not have right input format." % (file))
+                    sys.stderr.write("Files do not have right input format to build a complex." )
                 continue
             dict_with_PP[id]=structure
 
         else:
-            if alpha_carbon_chains != 3:        # If P-Nuc interaction, we need to have 3 different Seqs in list (Protein, 1st DNA and 2nd DNA).
-                if options_verbose:
-                    sys.stderr.write("File %s does not have right input format." % (file))
-                continue
-            dict_with_NP[id]=structure
+            if chain_type =="DNA":
+                if alpha_carbon_chains != 3:        # If DNA-Nuc interaction, we need to have 3 different Seqs in list (Protein, 1st DNA and 2nd DNA).
+                    if options_verbose:
+                        sys.stderr.write("File %s does not have right input format." % (file))
+                    continue
+                dict_with_dNP[id]=structure
+
+            elif chain_type == "RNA":
+                if alpha_carbon_chains == 2:
+                    if options_verbose:
+                        sys.stderr.write("File %s contains the right input format for a complex including single-strand RNA." % (file))
+                    continue
+                    dict_with_sNP[id]=structure
+
+                elif alpha_carbon_chains == 3:
+                    if options_verbose:
+                        sys.stderr.write("File %s contains the right input format for a complex including double-strand RNA." % (file))
+                    continue
+                    dict_with_dNP[id]=structure
+
+                else:
+                    if options_verbose:
+                        sys.stderr.write("File %s does not have right input format." % (file))
+                    continue
 
     if bool(dict_with_PP) == True:
         return (dict_with_PP, "PP")
 
+    elif bool(dict_with_dNP) == True:    # files contain 2x nucleotide chain and 1x protein chain
+        return (dict_with_dNP, "dNP")
+
+    elif bbol(dict_with_sNP) == True:    # files contain single-strand RNA protein interaction
+        return (dict_with_sNP,"sNP")
+
     else:
-        return (dict_with_NP,"NP")
+        if options_verbose:
+            sys.stderr.write("The provided input files cannot be used to " % (file))
+
 
 
 #===================================================================
@@ -301,3 +332,46 @@ def save_structure(structure, options_output, options_verbose, options_force):
     io.save("final_complex.pdb")
     if options_verbose:
             sys.stderr.write("The final complex was saved to %s \n" % (options_output))
+
+
+#========================================================================
+def check_for_clashes(ref_structure, added_chain, options_verbose):
+    """
+    Check for clashes between moving structure and refernce structure
+    after they have been superimposed.
+
+    Argument: reference structure and moving structure
+
+    Returns: reference structure (added if number of clashes below threshold)
+
+    """
+
+    ref_atoms=[]
+    for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
+        ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
+
+    moving_atoms = added_chain.get_atoms()
+
+    Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
+    clashes = 0
+    for atom in moving_atoms:     # Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
+        atoms_clashed = Neighbor.search(atom.coord,5)
+
+        if len(atoms_clashed) > 0:
+            clashes+=len(atoms_clashed)
+
+    if clashes < 30:   # If the clashes do not exceed a certain threshold add the chain to the model
+        present=[chain.id for chain in ref_structure.get_chains()]
+        if added_chain.id in present:
+            added_chain.id= create_ID(present)  #create random id so it does not clash with the current chain ids in the PDB structure
+        ref_structure[0].add(added_chain)
+        if options_verbose:
+            sys.stderr.write("The chain %s was added to the model\n" % (added_chain.id))
+    else:
+        if options_verbose:
+            sys.stderr.write("Too many clashes. The chain %s was not added to the model\n" % (added_chain.id))
+
+
+ # nc + 1                                  # increase counter of chains in model
+
+    return ref_structure
