@@ -24,6 +24,8 @@ stoichiometry# MACROBUILDER
 ## 2.1 Installation
 Just download the good sh*it from github!!!!!!!!! It's free real state!!!!!!!!
 ## Usage from the Terminal
+In order for the program to run, the user just neeeds to execute the python script called __project.py__ and provide the arguments necessary to achieve the goal. A detailed explanation of the arguments tha may be provided to the program can be found just below:
+
 ### Mandatory Arguments
 __In- and Output files__
 When running the program from the command line, the user has to give some specifications for example on the in and output files.
@@ -95,38 +97,37 @@ According to this, chain type is selected and the alpha carbons or C4's are retr
 ### 3.1.1. Protein-protein
 If chain-type is protein, then a message will prompt saying so to the terminal (given the case the user has selected so with the option verbose).
 
-Next, the program will start constructing the model. **First**, it will take the first binary field as reference structure and will iterate over the other files until the number of chains added is the same as the sum of the stechiometry required (if not stechiometry was provided, by default the program will ad each binary once to the final model).
+Next, the program will start constructing the model. **First**, it will take the first binary field as reference structure and will iterate over the other files until the number of chains added is the same as the sum of the stoichiometry required (if not stoichiometry was provided, by default the program will ad each binary once to the final model).
+
 ### 3.1.2. Protein-Nucleic Acids
 - for RNA and DNA the naming of the files has to be the given format
 __Input folder by the User__
 For the provided input folder from the user, the naming of the files holds more information in this case:
         {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb
 
-For a complex containing DNA, we take the provided DNA strand as our reference and look for sufficient alignments among the DNA strands in the provided pdb files. As soon as an alignment has been obtained that passes the threshold, we will superimpose the two strands. The program will first compare the forward and then the reversed DNA strand to the reference DNA, if the first strand did not pass the alignment trershold. The threshold for the alignment here is set to 75% as we know that DNA strands can be shorter and thus a higher percentage will rule out many reasonable alignments simply because the compared DNA strand is very short.
+For a complex containing DNA, we take the provided DNA strand as our reference and look for sufficient alignments among the DNA strands in the provided pdb files. As soon as an alignment has been obtained that passes the threshold, we will superimpose the two strands. The program will first compare the forward and then the reversed DNA strand to the reference DNA, if the first strand did not pass the alignment threshold. The threshold for the alignment here is set to 75% as we know that DNA strands can be shorter and thus a higher percentage will rule out many reasonable alignments simply because the compared DNA strand is very short.
 
 Once an alignment was found high enough and the two DNA strands are superimposed, the according protein chain will be add to the reference structure, if no clashes with the so far build reference structure were found. In case, the new protein chain clashes with the already included chains of the reference structure, we will drop the superimposition and move to the next pdb file in the list.
-
-
 
 ## 3.2. Biological Problems
 Past studies suggest that proteins may not work individually, but they will rather form a complex with other molecules in order to full fill certain functions. A classic examples for a model of an interaction can be found for ribosome or enzymes like the NADH dehydrogenase. While traditional experimental techniques such as x-ray crystallography and nuclear magnetic resonance (NMR) spectroscopy have been crucial in characterising the structure of a great amount of proteins, the evidence on structures of macrocomplexes is still scarce given the large size and structural flexibility these molecules present.
 
 However, with the rapid development of computers and decay in the computational hardware cost, fields such as computational biology have greatly bloomed, and provide promising help in predicting structures of macrocomplexes _1_ in silico _1_ based on the huge amount of data recovered by traditional techniques. Our project takes a simple approach to this problem by employing superimpostion between highly similar chains as a basis. __Superimposition__ is defined as the procedure by which which two molecule structures (two proteins, two DNA/RNA molecules, etc) are placed in space-minimizing the distance between backbone atoms of both structures. If we were to compare sequence alignment with structural alignment, equivalent residues would be the ones filling the same position in a multiple alignment (according to a sequence similarity score), in structural alignment equivalent residues would be the the closest ones.
 
-Once two chains that can be superimposed are identified, it is possible to calculate translation and roation matrices so the coordinate system of both structures are identical. By equating the coordinate system, we are able calculate how diffent the equivalent chains are. There are multiple measurements available to evaluate the structural alignment, but the most simple one, the Root-Mean-Square Deviations (RMSD), was  the one employed in this project. RMSD is based on the average distance between two sets of atoms, usually the backbone atoms (α-carbons in the case of proteins and C4 carbons in DNA/RNA strands) of the superimposed molecules. By convention, bellow a value of 3 both structures will be considered the same.
+Once two chains that can be superimposed are identified, it is possible to calculate translation and roation matrices so the coordinate system of both structures are identical. By equating the coordinate system, we are able calculate how different the equivalent chains are. There are multiple measurements available to evaluate the structural alignment, but the most simple one, the Root-Mean-Square Deviations (RMSD), was  the one employed in this project. RMSD is based on the average distance between two sets of atoms, usually the backbone atoms (α-carbons in the case of proteins and C4 carbons in DNA/RNA strands) of the superimposed molecules. By convention, bellow a value of 3 both structures will be considered the same.
 
 
 # 4. Analysis
 
 # 5. Limitations
 We note that our program comes with some limitations.
-First of all, the program demands certain formats. As described above, the stechiometry file has to be provided in a certain format depending on whether the user wants to build a protein-protein complex or a nucleotide-protein complex. Additionally, in the case of a nucleotide complex, the chains in the provided pdb files are expected to contain the peptide chain in the first position and then the nucleotide chain(s).
+First of all, the program demands certain formats. As described above, the stoichiometry file has to be provided in a certain format depending on whether the user wants to build a protein-protein complex or a nucleotide-protein complex. Additionally, in the case of a nucleotide complex, the chains in the provided pdb files are expected to contain the peptide chain in the first position and then the nucleotide chain(s).
 
-Furthermore, the final complex will be limited if the user does not provide the stechiometry. In this case, the program will build the macro complex for protein-protein by considering each interaction structure only once. If a certain structure should be included more than once in the final model, the user has to indicate this in the stechiometry file.
+Furthermore, the final complex will be limited if the user does not provide the stoichiometry. In this case, the program will build the macro complex for protein-protein by considering each interaction structure only once. If a certain structure should be included more than once in the final model, the user has to indicate this in the stoichiometry file. In the case of infinite models, the user can simply provide a stoichometry file with a number big enough (i.e. file_name:9999999).
 
 We are also aware that, when looking for clashes, the program only compares α-carbons. As discussed in class, the better approach would have been to consider ß-carbons as they provide additional information on the direction of side chains.
 
-
+It is also important to mention the computational toll the program supposes. Due to the high number of comparisons and alignments performed in order to add a new chain to the model, as the model keeps growing, each step takes more time, which is further exemplified when we try to build an infinite model. In those scenarios, the program does take a long time to run and depending on the available hardware resources, it may even crash if not crareful enough.
 
 # 6. Examples
 ## 6.1. Protein-Protein Complex: 1gzx
@@ -138,22 +139,31 @@ The provided input folder consist of three different files:
 * File1: 1gzx_A_B.pdb
 * File2: 1gzx_A_C.pdb
 * File3: 1gzx_A_D.pdb
-Other, than the name user might conclude from the file names, the chain A in File1 is not a homologue to the chain A in File3. Thus, the naming of the chains is not relevant for the builduing of the model. For instance, File2 contains the binary interaction of two homologue proteins.
+In this example, chain A in File1 is not a homologue to the chain A in File3. Thus, the naming of the chains is not relevant for the building of the model. For instance, File2 contains the binary interaction of two homologue proteins.
 
 Furthermore, we provide the user with a made-up stoichiometry file for this example so he can compare how the build structure might differ when including the *-s* argument. The stoichiometry file contains the following lines
 ```
-A:2
-B:4
-C:1
+1gzx_A_B:2
+1gzx_A_D:1
+1gzx_A_C:1
 ```
------------------------TO DO-----------------TO DO-----------------TO DO-----------------------------
+
 The final command has to be run on the terminal in order to build the macro complex of 1gzx:
 ```
-python3 HERE GOES THE FINAL NAME OF OUR SCRIPT !"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(/&%$%&/(/&%&/())))))"
-
+python3 project_SBI.py -i examples/1gzx -s examples/stoichiometry/stechtest.txt -o examples/output/1gzx_stech
 ```
 
-The ourput is stored at __!"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(__. If everything runs correctly, the model is expected to look something like the following:
+The output is stored in 'final_complex.png' in a folder at examples/output/1gzx_stech. If everything runs correctly, the model is expected to look like the following:
+![The assembly structure of 1gz](./img/1gzx_stech.png)
+
+It can be seen that the final pdb file of our model contains 4 chains, as indicated by the stoichiometry file. Since the first pairwise interaction was used twice for our model, the program automatically randomised the chain ID the second time the structure was added to avoid duplication.
+
+If no stoichiometry file would be provided for this example, the final complex would look like the following:
+![The assembly structure of 1gz](./img/1gzx_nostech.png)
+
+Comparing the two figures above, it can be seen that in the case of no stoichiometry provided, the final complex only contains three chains. As explained under limitations, our program will consider each structure only once in the case that the user provides no stoichiometry file for the protein-protein complex.
+
+
 ------------------------------------------------------------------------------------
 
 ## 6.2. Protein-Nucleotide Complex: 2O61
@@ -189,5 +199,5 @@ python3 HERE GOES THE FINAL NAME OF OUR SCRIPT !"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&
 
 The output is stored at __!"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(__. If everything runs correctly, the model is expected to look something like the following:
 
-# ENTER SCREENSHOTS OF OUR MODELS HERE AND FOR 1gzx
+# ENTER SCREENSHOTS OF OUR MODELS HERE
 --------------------------------------------------------------------------------------------------------
