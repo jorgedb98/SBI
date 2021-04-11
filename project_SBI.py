@@ -187,18 +187,24 @@ if __name__=="__main__":
                 dna_chain2=list(moving_structure.get_chains())[1]      # get the dna for the moving structure
                 dna_chain2_seq=''.join([x.get_resname() for x in dna_chain2])
                 if align_chains(dna_chain_seq, dna_chain2_seq) < 0.8:           # if alignment of the two DNA is below threshold
-                    dna_chain2=list[moving_structure.get_chains()][2]  # compare with the other DNA strand
+                    dna_chain2=list(moving_structure.get_chains())[2]  # compare with the other DNA strand
                     dna_chain2_seq=''.join([x.get_resname() for x in dna_chain2])
                     if align_chains(dna_chain_seq,dna_chain2_seq) < 0.8:       # if alignment with both DNA strands below threshold
+                        print("should continue")
                         continue                                       # no complex was buil
 
                 sup=Superimposer()                       # alignment is good enough to superimpose complex and complex2
-                dna_atoms=list(dna_chain.get_atoms())    # transform both DNA chains to list
-                dna_atoms2=list(dna_chain2.get_atoms())
-                # print("index", dna_atoms, dna_atoms2))
+                dna_atoms, molecule=alpha_carbons_retriever(dna_chain, options.verbose)    # transform both DNA chains to list
+                dna_atoms2, molecule2=alpha_carbons_retriever(dna_chain2, options.verbose)
+                # list(dna_chain2.get_atoms())
+
+                if len(dna_atoms)>len(dna_atoms2):
+                    retrieve=re.search(dna_chain2_seq,dna_chain_seq).span()
+                else:
+                    retrieve=re.search(dna_chain_seq,dna_chain2_seq).span()
                 # print(len(dna_atoms2))
 
-                sup.set_atoms(dna_atoms,dna_atoms2)    # retrieve rotation and translation matrix
+                sup.set_atoms(dna_atoms2,dna_atoms)    # retrieve rotation and translation matrix
                 RMSD=sup.rms                           # get RMSD for superimposition
 
                 if RMSD < threshold:                   # if RMSD is below threshold, apply superimposition
