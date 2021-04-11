@@ -181,7 +181,7 @@ if __name__=="__main__":
         else:
             ref_chain_seq = ''.join([x.get_resname()[0] for x in ref_dna_chains[0]]) # get sequence in case of RNA
 
-        print(ref_chain_seq)
+        # print(ref_chain_seq)
         macrocomplex_dict = {}
         for complex in stech_file.keys():                     # for all complexes that will be need for the stechiometry
             complex_id=complex.split('.')[0]
@@ -189,13 +189,34 @@ if __name__=="__main__":
             i=0
             while(i<stech_file[complex]):                     # while the complex is needed as many times as indicated in the stechiometry
                 for protein_interaction in complex_files:
-                    print(list(structure_data[protein_interaction].get_chains()))
+                    a=0
+                    # print(list(structure_data[protein_interaction].get_chains()))
                     dna_chain1 = list(structure_data[protein_interaction].get_chains())[1]      # get first nucleotide chain in structure
                     dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
-                    # print(dna_chain_seq)
-                    print(re.match(dna_chain_seq,ref_chain_seq))
+                    # print(ref_chain_seq)
+                    #print(re.match(dna_chain_seq,ref_chain_seq))
                     possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]    # span of matches
-                    #print(len(possible_locations))
+
+                    if not possible_locations:
+                        dna_chain1 = list(structure_data[protein_interaction].get_chains())[2]      # get first nucleotide chain in structure
+                        dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
+                        possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]
+
+                        if not possible_locations:
+                            continue
+
+                    start=possible_locations[a][0]          #Set the coordinate of where the first base of our DNA fragment is located
+                    end=possible_locations[a][1]            #Set the coordinate of where the last base of our DNA fragment is located
+                    possible_locations.append(possible_locations[a])  #Append the coordinates to the end of the list, in case we may need to reuse them
+                    tmp_ref_atoms=ref_atoms[start:end]      #Extract the atoms our atoms from the big reference DNA from one of the possible locations(if available)
+
+                    moving_atoms, molecule=alpha_carbons_retriever(dna_chain1, options.verbose)
+
+                    print(len(moving_atoms),len(tmp_ref_atoms))
+                    if len(moving_atoms) != len(tmp_ref_atoms):
+                        print(list(dna_chain1.get_atoms()))
+                    sup=Superimposer()
+                    sup.set_atoms(tmp_ref_atoms,moving_atoms)
                     #print(dna_chain_seq, ref_chain_seq)
                 i += 1
 
