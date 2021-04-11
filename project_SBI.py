@@ -172,65 +172,91 @@ if __name__=="__main__":
 
         pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
 
-        ref_dna = pdb_parser.get_structure(id,options.nuc)    # read ref DNA from user input
+        ref_dna = pdb_parser.get_structure(id,options.nuc)    # read nucelotide strand from user input as reference
+        ref_dna_chains = list(ref_dna.get_chains())           # get the strands of reference nucleotide chain
+        ref_atoms,molecule=alpha_carbons_retriever(ref_dna_chains[0], options.verbose)
+        if molecule =="DNA":
+            ref_chain_seq = ''.join([x.get_resname()[1] for x in ref_dna_chains[0]]) # get sequence in case of DNA
+        else:
+            ref_chain_seq = ''.join([x.get_resname()[0] for x in ref_dna_chains[0]]) # get sequence in case of RNA
+
+        print(ref_chain_seq)
         macrocomplex_dict = {}
         for complex in stech_file.keys():                     # for all complexes that will be need for the stechiometry
-            complex=complex.split('.')[0]
-            complex_files = [x for x in structure_data.keys() if x.split('.')[0] == complex]   # if the first name of the complex_id is equal store it to list complex_files
-            ref_structure = structure_data[complex_files.pop(0)]
-            dna_chain = list(ref_structure.get_chains())[1]            # takening the 2nd chain as reference DNA for alignment
-            #dna_chain=x.get_resname() for x in dna_chain]             # getting the residue names
-            dna_chain_seq=''.join([x.get_resname() for x in dna_chain])    # get residue names for DNA strand
+            complex_id=complex.split('.')[0]
+            complex_files = [x for x in structure_data.keys() if x.split('.')[0] == complex_id]   # if the first name of the complex_id is equal store it to list complex_files
+            i=0
+            while(i<stech_file[complex]):                     # while the complex is needed as many times as indicated in the stechiometry
+                for protein_interaction in complex_files:
+                    print(list(structure_data[protein_interaction].get_chains()))
+                    dna_chain1 = list(structure_data[protein_interaction].get_chains())[1]      # get first nucleotide chain in structure
+                    dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
+                    # print(dna_chain_seq)
+                    print(re.match(dna_chain_seq,ref_chain_seq))
+                    possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]    # span of matches
+                    #print(len(possible_locations))
+                    #print(dna_chain_seq, ref_chain_seq)
+                i += 1
 
-            for complex2 in complex_files:                             # go through list of proteins in complex_files
-                moving_structure=structure_data[complex2]
-                dna_chain2=list(moving_structure.get_chains())[1]      # get the dna for the moving structure
-                dna_chain2_seq=''.join([x.get_resname() for x in dna_chain2])
-                if align_chains(dna_chain_seq, dna_chain2_seq) < 0.8:           # if alignment of the two DNA is below threshold
-                    dna_chain2=list(moving_structure.get_chains())[2]  # compare with the other DNA strand
-                    dna_chain2_seq=''.join([x.get_resname() for x in dna_chain2])
-                    if align_chains(dna_chain_seq,dna_chain2_seq) < 0.8:       # if alignment with both DNA strands below threshold
-                        print("should continue")
-                        continue                                       # no complex was buil
+            # ref_structure = structure_data[complex_files.pop(0)]
+            # dna_chain = list(ref_structure.get_chains())[1]                    # takening the 2nd chain as reference DNA for alignment
+            # #dna_chain=x.get_resname() for x in dna_chain]                     # getting the residue names
+            # dna_chain_seq=''.join([x.get_resname()[2] for x in dna_chain])     # get residue names for DNA strand
 
-                sup=Superimposer()                       # alignment is good enough to superimpose complex and complex2
-                dna_atoms, molecule=alpha_carbons_retriever(dna_chain, options.verbose)    # transform both DNA chains to list
-                dna_atoms2, molecule2=alpha_carbons_retriever(dna_chain2, options.verbose)
+            # for complex2 in complex_files:                               # go through list of proteins in complex_files
+            #     moving_structure=structure_data[complex2]
+            #     dna_chain2=list(moving_structure.get_chains())[1]        # get the dna for the moving structure
+            #     dna_chain2_seq=''.join([x.get_resname()[2] for x in dna_chain2])
+            #     if align_chains(dna_chain_seq, dna_chain2_seq) < 0.8:           # if alignment of the two DNA is below threshold
+            #         dna_chain2=list(moving_structure.get_chains())[2]  # compare with the other DNA strand
+            #         dna_chain2_seq=''.join([x.get_resname()[2] for x in dna_chain2])
+            #         if align_chains(dna_chain_seq,dna_chain2_seq) < 0.8:       # if alignment with both DNA strands below threshold
+            #             print("should continue")
+            #             continue                                       # no complex build
+            #
+            #     sup=Superimposer()                       # alignment is good enough to superimpose complex and complex2
+            #     dna_atoms, molecule=alpha_carbons_retriever(dna_chain, options.verbose)    # transform both DNA chains to list
+            #     dna_atoms2, molecule2=alpha_carbons_retriever(dna_chain2, options.verbose)
                 # list(dna_chain2.get_atoms())
+                # print(len(dna_atoms2),len(dna_atoms))
 
-                if len(dna_atoms)>len(dna_atoms2):
-                    retrieve=re.search(dna_chain2_seq,dna_chain_seq).span()
-                else:
-                    retrieve=re.search(dna_chain_seq,dna_chain2_seq).span()
-                # print(len(dna_atoms2))
+                # if len(dna_atoms)>len(dna_atoms2):
+                #     #retrieve=re.search(dna_chain2_seq,dna_chain_seq).span()
+                #     print(dna_chain_seq,dna_chain2_seq)
+                #     continue
+                # else:
+                #     #retrieve=re.search(dna_chain_seq,dna_chain2_seq).span()
+                #     print(dna_chain_seq,dna_chain2_seq)
+                #     continue
+                # print(len(dna_atoms))
 
-                sup.set_atoms(dna_atoms2,dna_atoms)    # retrieve rotation and translation matrix
-                RMSD=sup.rms                           # get RMSD for superimposition
-
-                if RMSD < threshold:                   # if RMSD is below threshold, apply superimposition
-                    added_chain= next(moving_structure.get_chains())
-                    sup.apply(added_chain.get_atoms())
-
-                    ref_atoms=[]
-                    for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
-                        ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
-
-                    moving_atoms=added_chain.get_atoms()
-
-## could be function check-clashes (we could include the lines above too )
-                    Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
-                    clashes = 0
-                    for atom in moving_atoms: #Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
-                        atoms_clashed = Neighbor.search(atom.coord,5)
-
-                        if len(atoms_clashed) > 0:
-                            clashes+=len(atoms_clashed)
-
-                    if clashes < 30:   #If the clashes do not exceed a certain threshold add the chain to the model
-                        present=[chain.id for chain in ref_structure.get_chains()]
-                        if added_chain.id in present:
-                            added_chain.id= create_ID(present) #Change the id so it does not clash with the current chain ids in the PDB structure
-                        ref_structure[0].add(added_chain)
+#                 sup.set_atoms(dna_atoms2,dna_atoms)    # retrieve rotation and translation matrix
+#                 RMSD=sup.rms                           # get RMSD for superimposition
+#
+#                 if RMSD < 2:                   # if RMSD is below threshold, apply superimposition
+#                     added_chain= next(moving_structure.get_chains())
+#                     sup.apply(added_chain.get_atoms())
+#
+#                     ref_atoms=[]
+#                     for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
+#                         ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
+#
+#                     moving_atoms=added_chain.get_atoms()
+#
+# ## could be function check-clashes (we could include the lines above too )
+#                     Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
+#                     clashes = 0
+#                     for atom in moving_atoms: #Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
+#                         atoms_clashed = Neighbor.search(atom.coord,5)
+#
+#                         if len(atoms_clashed) > 0:
+#                             clashes+=len(atoms_clashed)
+#
+#                     if clashes < 30:   #If the clashes do not exceed a certain threshold add the chain to the model
+#                         present=[chain.id for chain in ref_structure.get_chains()]
+#                         if added_chain.id in present:
+#                             added_chain.id= create_ID(present) #Change the id so it does not clash with the current chain ids in the PDB structure
+#                         ref_structure[0].add(added_chain)
 ## could be function check-clashes
 
 
@@ -273,7 +299,7 @@ if __name__=="__main__":
         #         if alignment2 <0.75:                           # if the second DNA chain has an alignment below threhsold too
         #             structure_list.append(moveid)              #
         #             continue
-        #     ref_dna=''.join(move_dna)              #
+        #     ref_dna=''.join(move_dna)
         #
         #     nc+=1
 

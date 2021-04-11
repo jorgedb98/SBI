@@ -270,18 +270,18 @@ def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
 
     for ref_chain in ref_chains:
         for alt_chain in alt_chains:
-            if align_chains_peptides(ref_chain,alt_chain) > 0.95: # for the similar chains
+            if align_chains_peptides(ref_chain,alt_chain) > 0.95:   # for the similar chains
                 ref_atoms, ref_molecule = alpha_carbons_retriever(ref_chain, options_verbose)
                 alt_atoms, alt_molecule = alpha_carbons_retriever(alt_chain, options_verbose)
-                sup.set_atoms(ref_atoms,alt_atoms)  # retrieve rotation and translation matrix
-                RMSD=sup.rms                        # get RMSD for superimposition
+                sup.set_atoms(ref_atoms,alt_atoms)      # retrieve rotation and translation matrix
+                RMSD=sup.rms                            # get RMSD for superimposition
 
                 if RMSD < threshold:
                     if not best_RMSD or RMSD < best_RMSD:
                         best_RMSD=RMSD
                     superimpositions[(ref_chain.id,alt_chain.id)]=sup # add superimposition to dictionary
 
-    if bool(superimpositions) == True:                  #If we are able to superimpose any chain
+    if bool(superimpositions) == True:                  # If we are able to superimpose any chain
         superimpositions=sorted(superimpositions.items(), key=lambda x:x[1].rms)    #sort the superimpositions by RMSD
         return (superimpositions,best_RMSD)
 
