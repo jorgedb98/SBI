@@ -1,4 +1,4 @@
-stoichiometry# MACROBUILDER
+# MACROBUILDER
 *by Aitor, Jorge and Lilian*
 
 # Table of Content
@@ -98,7 +98,10 @@ According to this, chain type is selected and the alpha carbons or C4's are retr
 If chain-type is protein, then a message will prompt saying so to the terminal (given the case the user has selected so with the option verbose).
 
 Next, the program will start constructing the model. **First**, it will take the first binary field as reference structure and will iterate over the other files until the number of chains added is the same as the sum of the stoichiometry required (if not stoichiometry was provided, by default the program will ad each binary once to the final model).
+<<<<<<< HEAD
+=======
 
+>>>>>>> ea4fe96f57fc5c07d21b058c79ad16f0280b42f5
 ### 3.1.2. Protein-Nucleic Acids
 - for RNA and DNA the naming of the files has to be the given format
 __Input folder by the User__
@@ -123,7 +126,11 @@ Once two chains that can be superimposed are identified, it is possible to calcu
 We note that our program comes with some limitations.
 First of all, the program demands certain formats. As described above, the stoichiometry file has to be provided in a certain format depending on whether the user wants to build a protein-protein complex or a nucleotide-protein complex. Additionally, in the case of a nucleotide complex, the chains in the provided pdb files are expected to contain the peptide chain in the first position and then the nucleotide chain(s).
 
+<<<<<<< HEAD
+Furthermore, the final complex will be limited if the user does not provide the stoichiometry. In this case, the program will build the macro complex for protein-protein by considering each interaction structure only once. If a certain structure should be included more than once in the final model, the user has to indicate this in the stoichiometry file.
+=======
 Furthermore, the final complex will be limited if the user does not provide the stoichiometry. In this case, the program will build the macro complex for protein-protein by considering each interaction structure only once. If a certain structure should be included more than once in the final model, the user has to indicate this in the stoichiometry file. In the case of infinite models, the user can simply provide a stoichometry file with a number big enough (i.e. file_name:9999999).
+>>>>>>> ea4fe96f57fc5c07d21b058c79ad16f0280b42f5
 
 We are also aware that, when looking for clashes, the program only compares α-carbons. As discussed in class, the better approach would have been to consider ß-carbons as they provide additional information on the direction of side chains.
 

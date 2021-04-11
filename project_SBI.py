@@ -3,6 +3,7 @@ import os, sys, gzip, argparse, re, glob, numpy
 from functions import *
 from Bio.PDB import *
 
+
 parser=argparse.ArgumentParser(description="SBI_PYT program")
 requiredNamed = parser.add_argument_group('required named arguments')
 
