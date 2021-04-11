@@ -127,13 +127,13 @@ Furthermore, the final complex will be limited if the user does not provide the 
 
 We are also aware that, when looking for clashes, the program only compares α-carbons. As discussed in class, the better approach would have been to consider ß-carbons as they provide additional information on the direction of side chains.
 
-It is also important to mention the computational toll the program supposes. Due to the high number of comparisons and alignments performed in order to add a new chain to the model, as the model keeps growing, each step takes more time, which is further exemplified when we try to build an infinite model. In those scenarios, the program does take a long time to run and depending on the available hardware resources, it may even crash if not careful enough. 
+It is also important to mention the computational toll the program supposes. Due to the high number of comparisons and alignments performed in order to add a new chain to the model, as the model keeps growing, each step takes more time, which is further exemplified when we try to build an infinite model. In those scenarios, the program does take a long time to run and depending on the available hardware resources, it may even crash if not careful enough.
 
 # 6. Examples
 ## 6.1. Protein-Protein Complex: 1gzx
 As the first simple example for a protein-protein macrocomplex, we will present the heteromer [1gzx](https://www.rcsb.org/structure/1GZX). It is a heamoglobin consisting of four chains as it can be seen in the following figure.
 
-![The assembly structure of 1gz](./img/1gzx_assembly.jpeg)
+<img src="./img/1gzx_assembly.png" alt="pdb1gz" width="300"/>
 
 The provided input folder consist of three different files:
 * File1: 1gzx_A_B.pdb
@@ -154,12 +154,14 @@ python3 project_SBI.py -i examples/1gzx -s examples/stoichiometry/stechtest.txt 
 ```
 
 The output is stored in 'final_complex.png' in a folder at examples/output/1gzx_stech. If everything runs correctly, the model is expected to look like the following:
-![The assembly structure of 1gz](./img/1gzx_stech.png)
+
+<img src="./img/1gzx_stech.png" alt="1gz" width="300"/>
 
 It can be seen that the final pdb file of our model contains 4 chains, as indicated by the stoichiometry file. Since the first pairwise interaction was used twice for our model, the program automatically randomised the chain ID the second time the structure was added to avoid duplication.
 
 If no stoichiometry file would be provided for this example, the final complex would look like the following:
-![The assembly structure of 1gz](./img/1gzx_nostech.png)
+
+<img src="./img/1gzx_nostech.png" alt="1gz_no" width="300"/>
 
 Comparing the two figures above, it can be seen that in the case of no stoichiometry provided, the final complex only contains three chains. As explained under limitations, our program will consider each structure only once in the case that the user provides no stoichiometry file for the protein-protein complex.
 
@@ -169,7 +171,7 @@ Comparing the two figures above, it can be seen that in the case of no stoichiom
 ## 6.2. Protein-Nucleotide Complex: 2O61
 [2O61](https://www.rcsb.org/structure/2O61) is an example for a protein-nucleotide complex. The model describes a structure of NFkB, IRF7, IRF3 bound to the interferon-b enhancer. Its 3D is presented below.
 
-![The assembly structure of 2O61](./img/2o61_assembly.jpeg)
+<img src="./img/2o61_assembly.jpeg" alt="2o61" width="300"/>
 
 As this is a rather complex model, the input folder holds 54 pdb files containing binary interaction between one protein sequence and the according DNA strands. Thus, each file holds three chains. In contrast to the example of 1gzx, the naming of the files holds more information in this case:
         {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb
