@@ -90,11 +90,12 @@ Once this is done, the program will differentiate between protein-protein and nu
 - If it has _CA_, then it is taken as protein,
 - If it has _C4_, then it is taken as a DNA, RNA according to the notation ('DA','DT','DC','DG','DI' for DNA and 'A','T','C','G','I' for RNA).
 
-According to this, chain type is selected and the alpha carbo
+According to this, chain type is selected and the alpha carbons or C4's are retrieved.
 
 ### 3.1.1. Protein-protein
+If chain-type is protein, then a message will prompt saying so to the terminal (given the case the user has selected so with the option verbose).
 
-
+Next, the program will start constructing the model. **First**, it will take the first binary field as reference structure and will iterate over the other files until the number of chains added is the same as the sum of the stechiometry required (if not stechiometry was provided, by default the program will ad each binary once to the final model).
 ### 3.1.2. Protein-Nucleic Acids
 - for RNA and DNA the naming of the files has to be the given format
 __Input folder by the User__

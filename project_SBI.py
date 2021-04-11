@@ -67,9 +67,9 @@ if __name__=="__main__":
     if options.verbose:
         sys.stderr.write("%d files found in %s \n" % (len(work_files),options.input))
 
-#Get all the files as structures in a dictionary with the pdb parser from the Bio package and the function we built around it
+# Get all the files as structures in a dictionary with the pdb parser from the Bio package and the function we built around it
     structure_data, interaction=read_pdb_files(work_files, options.verbose)
-    os.chdir(absolute_path) # after processing input files get back to main working directory
+    os.chdir(absolute_path) # After processing input files get back to main working directory
 
 # Process Stoichiometry if provided by User
     if options.stechiometry:
