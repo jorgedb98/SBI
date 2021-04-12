@@ -112,6 +112,8 @@ For a complex containing DNA, we take the provided DNA strand as our reference a
 
 Once an alignment was found high enough and the two DNA strands are superimposed, the according protein chain will be add to the reference structure, if no clashes with the so far build reference structure were found. In case, the new protein chain clashes with the already included chains of the reference structure, we will drop the superimposition and move to the next pdb file in the list.
 
+**IMPORTANT ASSUMPTION: WE WON'T LOOK FOR CLASHES IN DNA AND PROTYEINS SINCE WE ASSUME WE ARE BUILDING SUCH A COMPLEX THAT THIS ONE BE A PROBLEM.
+
 ## 3.2. Biological Problems
 Past studies suggest that proteins may not work individually, but they will rather form a complex with other molecules in order to full fill certain functions. A classic examples for a model of an interaction can be found for ribosome or enzymes like the NADH dehydrogenase. While traditional experimental techniques such as x-ray crystallography and nuclear magnetic resonance (NMR) spectroscopy have been crucial in characterising the structure of a great amount of proteins, the evidence on structures of macrocomplexes is still scarce given the large size and structural flexibility these molecules present.
 

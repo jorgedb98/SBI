@@ -331,11 +331,11 @@ def save_structure(structure, options_output, options_verbose, options_force):
     os.chdir(options_output)
     io.save("final_complex.pdb")
     if options_verbose:
-            sys.stderr.write("The final complex was saved to %s \n" % (options_output))
+            sys.stderr.write("The final complex was saved to 'final_complex.pdb' in %s \n" % (options_output))
 
 
 #========================================================================
-def check_for_clashes(ref_structure, added_chain, options_verbose):
+def check_for_clashes(ref_structure, added_chain, options_verbose, success=False):
     """
     Check for clashes between moving structure and refernce structure
     after they have been superimposed.
@@ -348,7 +348,7 @@ def check_for_clashes(ref_structure, added_chain, options_verbose):
 
     ref_atoms=[]
     for chain in ref_structure.get_chains():  #Get all the atom positions in the current reference structure
-        ref_atoms.extend(alpha_carbons_retriever(chain,options.verbose)[0])
+        ref_atoms.extend(alpha_carbons_retriever(chain,options_verbose)[0])
 
     moving_atoms = added_chain.get_atoms()
 
@@ -361,17 +361,17 @@ def check_for_clashes(ref_structure, added_chain, options_verbose):
             clashes+=len(atoms_clashed)
 
     if clashes < 30:   # If the clashes do not exceed a certain threshold add the chain to the model
+
         present=[chain.id for chain in ref_structure.get_chains()]
         if added_chain.id in present:
             added_chain.id= create_ID(present)  #create random id so it does not clash with the current chain ids in the PDB structure
         ref_structure[0].add(added_chain)
+        success = True                          # set boolean because chain was added
         if options_verbose:
             sys.stderr.write("The chain %s was added to the model\n" % (added_chain.id))
     else:
         if options_verbose:
-            sys.stderr.write("Too many clashes. The chain %s was not added to the model\n" % (added_chain.id))
+            sys.stderr.write("The chain %s was not added to the model: too many clashes.\n" % (added_chain.id))
 
 
- # nc + 1                                  # increase counter of chains in model
-
-    return ref_structure
+    return ref_structure, success
