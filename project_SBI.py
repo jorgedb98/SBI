@@ -4,7 +4,7 @@ from functions import *
 from Bio.PDB import *
 
 
-parser=argparse.ArgumentParser(description="SBI_PYT program")
+parser=argparse.ArgumentParser(description="SBI_PYT program\n")
 requiredNamed = parser.add_argument_group('required named arguments')
 
 requiredNamed.add_argument('-i','--input',
@@ -26,19 +26,19 @@ requiredNamed.add_argument('-o','--output',
                     dest="output",
                     action="store",
                     type=str,
-                    help="Directory for the output files. If the directory already exists, check the -f parameter.")
+                    help="Directory for the output files. If the directory already exists, check the -f parameter.\n")
 
 parser.add_argument('-f','--force',
                     default=False,
                     dest="force",
                     action="store_true",
-                    help="In case the output directory exists, set the value to true in order to replace it. Otherwise, the output will be stored in a subdirectory.")
+                    help="In case the output directory exists, set the value to true in order to replace it. Otherwise, the output will be stored in a subdirectory.\n")
 
 parser.add_argument('-v','--verbose',
                     default=False,
                     dest="verbose",
                     action="store_true",
-                    help="Set the value to true if you want to console output of the progress")
+                    help="Set the value to true if you want to console output of the progress\n")
 
 parser.add_argument('-m','--max_iter',
                     default=100,
@@ -46,13 +46,13 @@ parser.add_argument('-m','--max_iter',
                     action="store",
                     type=int,
                     help="The number maximum iterations the program will try to expand the structure. \
-                        WARNING: If a high number of files is provided, the default value is set to 100, thus it may leave the structure unfinished.")
+                        WARNING: If a high number of files is provided, the default value is set to 100, thus it may leave the structure unfinished.\n")
 
 parser.add_argument('-n','--nuc',
                     default=None,
                     dest="nuc",
                     action="store",
-                    help="Only needed when nucleotide-protein interactions are provided. The path to the file holding the model nucelic acid pdb file (for DNA or RNA) will be stored.")
+                    help="Only needed when nucleotide-protein interactions are provided. The path to the file holding the model nucelic acid pdb file (for DNA or RNA) will be stored.\n")
 
 options=parser.parse_args()
 
@@ -62,7 +62,7 @@ if __name__=="__main__":
     try:
         work_files=check_files(options.input)
     except NotADirectoryError as e:
-        sys.stderr.write("Input option does not correspond to an existing directory. Please try again.")
+        sys.stderr.write("Input option does not correspond to an existing directory. Please try again.\n")
         exit()
 
     if options.verbose:
@@ -87,7 +87,7 @@ if __name__=="__main__":
             exit()
     else:
         if options.verbose:
-            sys.stderr.write("You have not provided a stoichiometry. Your model will be built using the default value")
+            sys.stderr.write("You have not provided a stoichiometry. Your model will be built using the default value\n")
         stech_file={}
         for key in structure_data:
             stech_file[key]=1
@@ -95,7 +95,7 @@ if __name__=="__main__":
 
     if interaction == "PP": # When files contain PP complex
         if options.verbose:
-            sys.stderr.write("The files provided contain a Protein-Protein interaction.")
+            sys.stderr.write("The files provided contain a Protein-Protein interaction.\n")
 
         prot_list = list(structure_data.keys())
         refid=prot_list.pop(0)
@@ -147,53 +147,60 @@ if __name__=="__main__":
 
     elif interaction == "dNP":          # when file contains DNA chains and protein chain
         if options.verbose:
-            sys.stderr.write("The files provided contain a double-strand Nucleotide-Protein interaction.")
+            sys.stderr.write("The files provided contain a double-strand Nucleotide-Protein interaction.\n")
 
         if not options.nuc:             # User did not provide the nucleotide sequence needed for building a complex
-            raise ValueError("It seems you are trying to build a macrocomplex for nucleic acid-protein interacion but you are lacking the reference nucleic acid structure. Please, provide it.")
+            raise ValueError("It seems you are trying to build a macrocomplex for nucleic acid-protein interacion but you are lacking the reference nucleic acid structure. Please, provide it.\n")
         id="ref_dna"
 
         pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
 
         ref_dna = pdb_parser.get_structure(id,options.nuc)    # read nucelotide strand from user input as reference
         ref_dna_chains = list(ref_dna.get_chains())           # get the strands of reference nucleotide chain
+
         ref_atoms,molecule=alpha_carbons_retriever(ref_dna_chains[0], options.verbose)
+        ref_atoms2, molecule=alpha_carbons_retriever(ref_dna_chains[1], options.verbose)
+        ref_atoms.extend(ref_atoms2)
+
         if molecule =="DNA":
-            ref_chain_seq = ''.join([x.get_resname()[1] for x in ref_dna_chains[0]]) # get sequence in case of DNA
+            ref_chain_seq = ''.join([x.get_resname()[2] for x in ref_dna_chains[0]]) # get sequence in case of DNA
+            ref_chain_seq+=(''.join([x.get_resname()[2] for x in ref_dna_chains[1]]))
         else:
-            ref_chain_seq = ''.join([x.get_resname()[0] for x in ref_dna_chains[0]]) # get sequence in case of RNA
+            ref_chain_seq = ''.join([x.get_resname()[1] for x in ref_dna_chains[0]]) # get sequence in case of RNA
+
 
         # print(ref_chain_seq)
         for complex in stech_file.keys():                     # for all complexes that will be need for the stechiometry
             if options.verbose:
-                sys.stderr.write("Processing complex %s\n" % (complex))
+                sys.stderr.write("\nProcessing complex %s\n" % (complex))
             complex_files = [x for x in structure_data.keys() if x.split('.')[0] == complex]   # if the first name of the complex_id is equal store it to list complex_files
-            i=0
-            while(i<stech_file[complex]):               # while the complex is needed as many times as indicated in the stechiometry
-                a=0
-                for protein_interaction in complex_files:
-                    #print(protein_interaction)
-                    # print(list(structure_data[protein_interaction].get_chains()))
-                    dna_chain1 = list(structure_data[protein_interaction].get_chains())[1]      # get first nucleotide chain in structure
+            # i=0
+            # while(i<stech_file[complex]):               # while the complex is needed as many times as indicated in the stechiometry
+            a=0
+            for protein_interaction in complex_files:
+                i=0
+                # print(protein_interaction)
+                # print(list(structure_data[protein_interaction].get_chains()))
+                dna_chain1 = list(structure_data[protein_interaction].get_chains())[1]      # get first nucleotide chain in structure
+                dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
+                #print(re.match(dna_chain_seq,ref_chain_seq))
+                possible_locations=[]
+                possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]    # span of matches
+                #print(possible_locations)
+
+                if not possible_locations:
+                    dna_chain1 = list(structure_data[protein_interaction].get_chains())[2]      # get first nucleotide chain in structure
                     dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
-                    #print(dna_chain_seq)
-                    #print(re.match(dna_chain_seq,ref_chain_seq))
-                    possible_locations=[]
-                    possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]    # span of matches
+                    #print("Looking for a pattern as longest as %d" %(len(dna_chain_seq)))
+                    possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]
 
                     if not possible_locations:
-                        dna_chain1 = list(structure_data[protein_interaction].get_chains())[2]      # get first nucleotide chain in structure
-                        dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
-                        #print("Looking for a pattern as longest as %d" %(len(dna_chain_seq)))
-                        possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]
+                        if options.verbose:
+                            sys.stderr.write("For chain %s no pattern matched with the reference nucleotide sequence\n" % (dna_chain1.id))
+                        continue
 
-                        if not possible_locations:
-                            if options.verbose:
-                                sys.stderr.write("For chain %s no alignment with the reference nucleotide sequence was found\n" % (dna_chain1.id))
-                            #print("nothing found")
-                            continue
-                    # while(i<stech_file[complex]):                     # while the complex is needed as many times as indicated in the stechiometry
-
+                while(i<stech_file[complex]):                     # while the complex is needed as many times as indicated in the stechiometry
+                    #print("JUNGE WAS SOLL DER SCHEIß\n")
                     start=possible_locations[i][0]          #Set the coordinate of where the first base of our DNA fragment is located
                     #print(start)
                     end=possible_locations[i][1]            #Set the coordinate of where the last base of our DNA fragment is located
@@ -209,15 +216,19 @@ if __name__=="__main__":
                     if len(moving_atoms) != len(tmp_ref_atoms):
                         if options.verbose:
                             sys.stderr.write("Lengths are different. Chain %s will be ignored.\n" % (dna_chain1.id))
-
+                        i += 1
                         continue
                         #print(moving_atoms)
                         #print(list(dna_chain1.get_atoms()))
+                    #align_chains()
                     sup=Superimposer()
                     sup.set_atoms(tmp_ref_atoms,moving_atoms)
                     #print(dna_chain_seq, ref_chain_seq)
 
-                    if not sup.rms < 2:     # Check if RMSD is below threshold
+                    if not sup.rms < 3:     # Check if RMSD is below threshold
+                        i += 1
+                        if options.verbose:
+                            sys.stderr.write("RMSD score was %d. Chain %s will be ignored.\n" % (sup.rms, dna_chain1.id))
                         continue
 
                     chain_to_add=list(structure_data[protein_interaction].get_chains())[0]  # list of proteins for superimposed DNA strand
@@ -225,19 +236,19 @@ if __name__=="__main__":
 
                     ref_dna,success=check_for_clashes(ref_dna, chain_to_add, options.verbose)
 
-                a+=1
+            # a+=1
 
-                i += 1
+                    i += 1
 
         save_structure(ref_dna[0], options.output, options.verbose, options.force)
         #else cannot save as pdb -> save as MMCIFIO
 
     elif interaction == "sNP":
         if options.verbose:
-            sys.stderr.write("The files provided contain a single-strand RNA  Protein interaction.")
+            sys.stderr.write("The files provided contain a single-strand RNA  Protein interaction.\n")
 
         if not options.nuc:             # User did not provide the nucleotide sequence needed for building a complex
-            raise ValueError("It seems you are trying to build a macrocomplex for nucleic acid-protein interacion but you are lacking the reference nucleic acid structure. Please, provide it.")
+            raise ValueError("It seems you are trying to build a macrocomplex for nucleic acid-protein interacion but you are lacking the reference nucleic acid structure. Please, provide it.\n")
 
 
     else:

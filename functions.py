@@ -355,12 +355,12 @@ def check_for_clashes(ref_structure, added_chain, options_verbose, success=False
     Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
     clashes = 0
     for atom in moving_atoms:     # Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
-        atoms_clashed = Neighbor.search(atom.coord,5)
+        atoms_clashed = Neighbor.search(atom.coord,3 )
 
         if len(atoms_clashed) > 0:
             clashes+=len(atoms_clashed)
 
-    if clashes < 30:   # If the clashes do not exceed a certain threshold add the chain to the model
+    if clashes < 100:   # If the clashes do not exceed a certain threshold add the chain to the model
 
         present=[chain.id for chain in ref_structure.get_chains()]
         if added_chain.id in present:
