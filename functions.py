@@ -287,7 +287,7 @@ def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
 
 #===================================================================
 
-def create_ID(IDs_present):
+def create_ID(IDs_present, DNA1=None, DNA2=None):
     """
     Create new ID to make sure it is a non-taken ID
     Input: list of IDs already occupied
@@ -335,7 +335,7 @@ def save_structure(structure, options_output, options_verbose, options_force):
 
 
 #========================================================================
-def check_for_clashes(ref_structure, added_chain, options_verbose, success=False):
+def check_for_clashes(ref_structure, added_chain, options_verbose, success=False,PP=True, DNA1=None,DNA2=None):
     """
     Check for clashes between moving structure and refernce structure
     after they have been superimposed.
@@ -364,7 +364,10 @@ def check_for_clashes(ref_structure, added_chain, options_verbose, success=False
 
         present=[chain.id for chain in ref_structure.get_chains()]
         if added_chain.id in present:
-            added_chain.id= create_ID(present)  #create random id so it does not clash with the current chain ids in the PDB structure
+            if PP==True:
+                added_chain.id= create_ID(present)  #create random id so it does not clash with the current chain ids in the PDB structure
+            else:
+                added_chain.id= create_ID(present,DNA1,DNA2)
         ref_structure[0].add(added_chain)
         success = True                          # set boolean because chain was added
         if options_verbose:
