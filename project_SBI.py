@@ -68,7 +68,12 @@ parser.add_argument('-t','--threshold',
                     dest='threshold',
                     help='Max RMSD treshold allowed when superimposing two structures.\n')
 
-parser.add_ar
+parser.add_argument('-wt','--no_template',
+                    default='nt',
+                    action="store_true",
+                    dest='wt',
+                    help='Call this argument in case the user wants to build a model Protein-DNA interaction model \
+                    based on a reference DNA chain\n.')
 
 options=parser.parse_args()
 
@@ -111,8 +116,8 @@ if __name__=="__main__":
             keys=set([x.split('.')[0] for x in structure_data.keys()])
             for a in keys:
                 stech_file[a]=1
-    interaction ='PP'
-    if interaction == "PP": # When files contain PP complex
+
+    if options.wt == "nt": # When files contain PP complex
         if options.verbose:
             sys.stderr.write("The files provided contain a Protein-Protein interaction.\n")
 
@@ -167,7 +172,7 @@ if __name__=="__main__":
         save_structure(ref_structure[0], options.output, options.verbose, options.force)
 
 
-    elif interaction == "dNP":          # when file contains nucleotide chains and protein chain
+    elif options.wt == True:          # when file contains nucleotide chains and protein chain
         if options.verbose:
             sys.stderr.write("The files provided contain a double-strand Nucleotide-Protein interaction.\n")
 
