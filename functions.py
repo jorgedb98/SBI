@@ -9,7 +9,9 @@ def read_pdb_files(pdb_files, options_verbose):
     """
     Given a pdb file, read it, remove the heteroatoms and create a dictionary with the chain ids and the structure. This dictionary also classifies the
     input in protein-protein interaction, DNA-protein interaction or RNA-protein interaction (this last one, considering if RNA is single-strand or double-strand).
+
     - Input: PDB File (files argument) with a pairwise interaction
+
     - Output: Dictionary with three elements: Chain ids (2) and the structure
     """
 
@@ -60,7 +62,7 @@ def read_pdb_files(pdb_files, options_verbose):
         if chain_type == "Protein":               # If P-P interaction, we need to have binary interactions (2 CA lists)
             if alpha_carbon_chains!= 2:
                 if options_verbose:
-                    sys.stderr.write("Files do not have right input format to build a complex." )
+                    sys.stderr.write("Files do not have right input format to build a complex.\n" )
                 continue
             dict_with_PP[id]=structure
 
@@ -68,26 +70,26 @@ def read_pdb_files(pdb_files, options_verbose):
             if chain_type =="DNA":
                 if alpha_carbon_chains != 3:        # If DNA-Nuc interaction, we need to have 3 different Seqs in list (Protein, 1st DNA and 2nd DNA).
                     if options_verbose:
-                        sys.stderr.write("File %s does not have right input format." % (file))
+                        sys.stderr.write("File %s does not have right input format.\n" % (file))
                     continue
                 dict_with_dNP[id]=structure
 
             elif chain_type == "RNA":
                 if alpha_carbon_chains == 2:
                     if options_verbose:
-                        sys.stderr.write("File %s contains the right input format for a complex including single-strand RNA." % (file))
+                        sys.stderr.write("File %s contains the right input format for a complex including single-strand RNA.\n" % (file))
                     continue
                     dict_with_sNP[id]=structure
 
                 elif alpha_carbon_chains == 3:
                     if options_verbose:
-                        sys.stderr.write("File %s contains the right input format for a complex including double-strand RNA." % (file))
+                        sys.stderr.write("File %s contains the right input format for a complex including double-strand RNA.\n" % (file))
                     continue
                     dict_with_dNP[id]=structure
 
                 else:
                     if options_verbose:
-                        sys.stderr.write("File %s does not have right input format." % (file))
+                        sys.stderr.write("File %s does not have right input format.\n" % (file))
                     continue
 
     if bool(dict_with_PP) == True:
@@ -110,9 +112,12 @@ def read_pdb_files(pdb_files, options_verbose):
 def alpha_carbons_retriever(chain, options_verbose):
     """
     Get alpha Carbons from input chains (CA for preotein sequence and C4' for DNA/RNA).
+
     Argument: chain class with the atoms
+
     Returns: - list of CA or C4 atoms
              - class of molecule we are working with
+
     """
     nucleic_acids = ['DA','DT','DC','DG','DI','A','U','C','G','I']
     RNA = ['A','U','C','G','I']
@@ -265,16 +270,40 @@ def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
 
     for ref_chain in ref_chains:
         for alt_chain in alt_chains:
-            if align_chains_peptides(ref_chain,alt_chain) > 0.95:   # for the similar chains
-                ref_atoms, ref_molecule = alpha_carbons_retriever(ref_chain, options_verbose)
-                alt_atoms, alt_molecule = alpha_carbons_retriever(alt_chain, options_verbose)
-                sup.set_atoms(ref_atoms,alt_atoms)      # retrieve rotation and translation matrix
-                RMSD=sup.rms                            # get RMSD for superimposition
+            ref_atoms, ref_molecule = alpha_carbons_retriever(ref_chain, options_verbose)
+            alt_atoms, alt_molecule = alpha_carbons_retriever(alt_chain, options_verbose)
+            if alt_molecule != ref_molecule:
+                continue
+            if ref_molecule == "Protein":
+                if not align_chains_peptides(ref_chain,alt_chain) > 0.95:   # for the similar chains
+                    continue
+            elif ref_molecule == "DNA":
+                ref_chain_seq+=(''.join([x.get_resname()[2] for x in ref_chain]))
+                alt_chain_seq+=(''.join([x.get_resname()[2] for x in alt_chain]))
+                if not align_chains(ref_chain_seq,alt_chain_seq)>0.95:
+                    continue
+            elif ref_molecule == "RNA":
+                ref_chain_seq+=(''.join([x.get_resname()[1] for x in ref_chain]))
+                ref_chain_seq+=(''.join([x.get_resname()[1] for x in alt_chain]))
+                if not align_chains(ref_chain_seq,alt_chain_seq)>0.95:
+                    continue
 
-                if RMSD < threshold:
-                    if not best_RMSD or RMSD < best_RMSD:
-                        best_RMSD=RMSD
-                    superimpositions[(ref_chain.id,alt_chain.id)]=sup # add superimposition to dictionary
+            sup.set_atoms(ref_atoms,alt_atoms)
+            RMSD=sup.rms
+            if RMSD < threshold:
+                if not best_RMSD or RMSD < best_RMSD:
+                    best_RMSD=RMSD
+                superimpositions[(ref_chain.id,alt_chain.id)]=sup
+            # if align_chains_peptides(ref_chain,alt_chain) > 0.95:   # for the similar chains
+            #     ref_atoms, ref_molecule = alpha_carbons_retriever(ref_chain, options_verbose)
+            #     alt_atoms, alt_molecule = alpha_carbons_retriever(alt_chain, options_verbose)
+            #     sup.set_atoms(ref_atoms,alt_atoms)      # retrieve rotation and translation matrix
+            #     RMSD=sup.rms                            # get RMSD for superimposition
+
+                # if RMSD < threshold:
+                #     if not best_RMSD or RMSD < best_RMSD:
+                #         best_RMSD=RMSD
+                #     superimpositions[(ref_chain.id,alt_chain.id)]=sup # add superimposition to dictionary
 
     if bool(superimpositions) == True:                  # If we are able to superimpose any chain
         superimpositions=sorted(superimpositions.items(), key=lambda x:x[1].rms)    #sort the superimpositions by RMSD
@@ -282,7 +311,7 @@ def superimpose_chains(ref_structure,alt_structure,threshold, options_verbose):
 
 #===================================================================
 
-def create_ID(IDs_present, DNA1=None, DNA2=None):
+def create_ID(IDs_present):
     """
     Create new ID to make sure it is a non-taken ID
     Input: list of IDs already occupied
@@ -301,18 +330,18 @@ def create_ID(IDs_present, DNA1=None, DNA2=None):
     elif len(IDs_present)>=62: # as soon as all possibilities from the set are taken
         for character in possibilities:
             for character2 in possibilities:
-                ID = character + character2     # combine letters to create new ID
+                ID = character + character2     # combine letters to createe new ID
                 if ID not in IDs_present:       # test if new ID already taken
-                    return ID
+                    return
                 else:
                     continue
 #========================================================================
 def save_structure(structure, options_output, options_verbose, options_force):
     """
-    Function for saving the generated complexes as pdb files to a folder at the
+    Function saving the generated complexes as pdb files to a folder at the
     output directory provided by the user
-    If  a folder already exists at that directory and the force option is selected,
-    it will forcefully overwrite this folder.
+    If  a folder already exisst at that directory and the force option is selected,
+    it will forcefully overwrite this folder
     """
     io=PDBIO()
     io.set_structure(structure)
@@ -330,12 +359,15 @@ def save_structure(structure, options_output, options_verbose, options_force):
 
 
 #========================================================================
-def check_for_clashes(ref_structure, added_chain, options_verbose,clash_treshold, DNA1=None, DNA2=None,success=False,PP=True):
+def check_for_clashes(ref_structure, added_chain, options_verbose,clash_treshold, success=False):
     """
     Check for clashes between moving structure and refernce structure
     after they have been superimposed.
+
     Argument: reference structure and moving structure
+
     Returns: reference structure (added if number of clashes below threshold)
+
     """
 
     ref_atoms=[]
@@ -347,23 +379,20 @@ def check_for_clashes(ref_structure, added_chain, options_verbose,clash_treshold
     Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
     clashes = 0
     for atom in moving_atoms:     # Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
-        atoms_clashed = Neighbor.search(atom.coord,3)
+        atoms_clashed = Neighbor.search(atom.coord,3 )
 
         if len(atoms_clashed) > 0:
             clashes+=len(atoms_clashed)
 
     if clashes < clash_treshold:   # If the clashes do not exceed a certain threshold add the chain to the model
 
-        present=[chain.id for chain in list(ref_structure.get_chains())]
+        present=[chain.id for chain in ref_structure.get_chains()]
         if added_chain.id in present:
-            if PP==True:
-                added_chain.id= create_ID(present)  #create random id so it does not clash with the current chain ids in the PDB structure
-            else:
-                added_chain.id= create_ID(present, DNA1, DNA2)
+            added_chain.id= create_ID(present)  #create random id so it does not clash with the current chain ids in the PDB structure
         ref_structure[0].add(added_chain)
         success = True                          # set boolean because chain was added
         if options_verbose:
-            sys.stderr.write("Adding chain %s !\n" % (added_chain.id))
+            sys.stderr.write("The chain %s was added to the model\n" % (added_chain.id))
     else:
         if options_verbose:
             sys.stderr.write("The chain %s was not added to the model: too many clashes.\n" % (added_chain.id))

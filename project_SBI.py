@@ -1,6 +1,6 @@
 import os, sys, gzip, argparse, re, glob, numpy
 
-from aitorfunc import *
+from functions import *
 from Bio.PDB import *
 
 
@@ -68,6 +68,8 @@ parser.add_argument('-t','--threshold',
                     dest='threshold',
                     help='Max RMSD treshold allowed when superimposing two structures.\n')
 
+parser.add_ar
+
 options=parser.parse_args()
 
 if __name__=="__main__":
@@ -109,7 +111,7 @@ if __name__=="__main__":
             keys=set([x.split('.')[0] for x in structure_data.keys()])
             for a in keys:
                 stech_file[a]=1
-
+    interaction ='PP'
     if interaction == "PP": # When files contain PP complex
         if options.verbose:
             sys.stderr.write("The files provided contain a Protein-Protein interaction.\n")
@@ -136,6 +138,9 @@ if __name__=="__main__":
             current_stech[moveid]+=1
             nc +=1
             if bool(superimposition) == False:                # If no superimposition was made, continue to next structure
+                if options.verbose:
+                    sys.stderr.write("No superimpositions found structure %s.\n" %(moveid) )
+
                 it_count+=1                                   # increase count of iterations if no iteration was found
                 prot_list.append(moveid)                      # if no superimposition found, bring current moving structure to end of list
                 continue
@@ -145,7 +150,7 @@ if __name__=="__main__":
                 added_chain = [chain for chain in moving_structure.get_chains() if chain.id != possibility[1]][0]
                 sup.apply(added_chain.get_atoms()) # apply rotation matrix to moving structure
 
-                ref_structure, success =check_for_clashes(ref_structure, added_chain, options.verbose,clash_treshold=options.clashes)
+                ref_structure, success =check_for_clashes(ref_structure, added_chain, options.verbose, options.clashes)
 
                 if success is True:
                     nc+=1
@@ -247,12 +252,12 @@ if __name__=="__main__":
                     chain_to_add=list(structure_data[protein_interaction].get_chains())[0]  # list of proteins for superimposed DNA strand
                     sup.apply(chain_to_add.get_atoms())     # apply translation and rotation matrix to chain
 
-                    ref_dna,success=check_for_clashes(ref_structure=ref_dna, added_chain=chain_to_add, options_verbose=options.verbose)
+                    ref_dna,success=check_for_clashes(ref_structure=ref_dna, added_chain=chain_to_add, clash_treshold=options.clashes, options_verbose=options.verbose)
                     if success is True:
                         if options.verbose:
                             sys.stderr.write("RMSD score was %d. Chain %s was added.\n" % (sup.rms, dna_chain1.id))
-                        i+=1 # increase stoichometry counter since new chain was added
-
+                    #     i+=1 # increase stoichometry counter since new chain was added
+                    i=+1
 
         save_structure(ref_dna[0], options.output, options.verbose, options.force)
         #else cannot save as pdb -> save as MMCIFIO

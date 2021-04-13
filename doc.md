@@ -1,4 +1,4 @@
-# MACROBUILDER
+infinite# MACROBUILDER
 *by Aitor, Jorge and Lilian*
 
 # Table of Content
@@ -24,11 +24,11 @@
 ## 2.1 Installation
 Just download the good sh*it from github!!!!!!!!! It's free real state!!!!!!!!
 ## Usage from the Terminal
-In order for the program to run, the user just neeeds to execute the python script called __project.py__ and provide the arguments necessary to achieve the goal. A detailed explanation of the arguments tha may be provided to the program can be found just below:
+In order for the program to run, the user simply has to execute the python script called __project.py__ and provide the obligatory arguments to obtain the model. A detailed explanation of possible arguments that may be provided to the program are listed below:
 
 ### Mandatory Arguments
 __In- and Output files__
-When running the program from the command line, the user has to give some specifications for example on the in and output files.
+When running the program from the command line, the user has to give some specifications for example the path to the in- and output files.
 ```
 '-i','--input'
 '-o','--output'
@@ -42,7 +42,7 @@ __stoichiometry file__
 ```
 '-s', '--stoichiometry'
 ```
-The stoichiometry argument is optional. If the user knows the stoichiometry of the final complex, he can provide the __Path__ where the file containing the stoichiometry is placed. Depending on the type of complex, the stoichiometry file should be in a certain format.
+The stoichiometry argument is optional. If the user knows the stoichiometry of the final complex, he can provide the __Path__ to the file containing the stoichiometry. Depending on the type of complex, the stoichiometry file should be in a certain format.
 Protein-Protein Complex:
 
 |         | Protein-Protein                     | Protein-Nucleotide                            |  
@@ -71,11 +71,17 @@ __Logging__
 ```
 The verbose argument allows the user to receive notifications in the command interface as the program develops. __By default, this argument is set to False__, so unless the user calls the argument no notification will be displayed.
 
+__Max Number of Clashes__
+```
+'-c','--clashes'
+```
+The user has the option to set a value as the maximal number of clashes that is considered when superimposing two chains for the model. Superimpositions above the threshold are discarded. The default value is set to 30 clashes.
+
 __Max Iterations__
 ```
 '-m','--max_iter'
 ```
-The option max_iter specifies the number of maximal iterations to go over the input files to build the model so the program will not run indefinetely when infinte structures are built or if no new chains can be added to the model. The default value is set to 100, thus, when provided a high number of files the program might exit before the structure is finished.
+The option max_iter specifies the number of maximal iterations to go over the input files to build the model so the program will not run indefinitely when infinte structures are built or if no new chains can be added to the model. The default value is set to 100, thus, when provided a high number of files the program might exit before the structure is finished.
 
 # 3. Theory
 ## 3.1. Method and algorithm
@@ -112,7 +118,7 @@ For a complex containing DNA, we take the provided DNA strand as our reference a
 
 Once an alignment was found high enough and the two DNA strands are superimposed, the according protein chain will be add to the reference structure, if no clashes with the so far build reference structure were found. In case, the new protein chain clashes with the already included chains of the reference structure, we will drop the superimposition and move to the next pdb file in the list.
 
-**IMPORTANT ASSUMPTION: WE WON'T LOOK FOR CLASHES IN DNA AND PROTYEINS SINCE WE ASSUME WE ARE BUILDING SUCH A COMPLEX THAT THIS ONE BE A PROBLEM.
+**IMPORTANT ASSUMPTION: WE WON'T LOOK FOR CLASHES IN DNA AND PROTEINS SINCE WE ASSUME WE ARE BUILDING SUCH A COMPLEX THAT THIS ONE BE A PROBLEM.
 
 ## 3.2. Biological Problems
 Past studies suggest that proteins may not work individually, but they will rather form a complex with other molecules in order to full fill certain functions. A classic examples for a model of an interaction can be found for ribosome or enzymes like the NADH dehydrogenase. While traditional experimental techniques such as x-ray crystallography and nuclear magnetic resonance (NMR) spectroscopy have been crucial in characterising the structure of a great amount of proteins, the evidence on structures of macrocomplexes is still scarce given the large size and structural flexibility these molecules present.
