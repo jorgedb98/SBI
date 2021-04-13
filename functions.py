@@ -9,9 +9,7 @@ def read_pdb_files(pdb_files, options_verbose):
     """
     Given a pdb file, read it, remove the heteroatoms and create a dictionary with the chain ids and the structure. This dictionary also classifies the
     input in protein-protein interaction, DNA-protein interaction or RNA-protein interaction (this last one, considering if RNA is single-strand or double-strand).
-
     - Input: PDB File (files argument) with a pairwise interaction
-
     - Output: Dictionary with three elements: Chain ids (2) and the structure
     """
 
@@ -112,12 +110,9 @@ def read_pdb_files(pdb_files, options_verbose):
 def alpha_carbons_retriever(chain, options_verbose):
     """
     Get alpha Carbons from input chains (CA for preotein sequence and C4' for DNA/RNA).
-
     Argument: chain class with the atoms
-
     Returns: - list of CA or C4 atoms
              - class of molecule we are working with
-
     """
     nucleic_acids = ['DA','DT','DC','DG','DI','A','U','C','G','I']
     RNA = ['A','U','C','G','I']
@@ -306,18 +301,18 @@ def create_ID(IDs_present, DNA1=None, DNA2=None):
     elif len(IDs_present)>=62: # as soon as all possibilities from the set are taken
         for character in possibilities:
             for character2 in possibilities:
-                ID = character + character2     # combine letters to createe new ID
+                ID = character + character2     # combine letters to create new ID
                 if ID not in IDs_present:       # test if new ID already taken
-                    return
+                    return ID
                 else:
                     continue
 #========================================================================
 def save_structure(structure, options_output, options_verbose, options_force):
     """
-    Function saving the generated complexes as pdb files to a folder at the
+    Function for saving the generated complexes as pdb files to a folder at the
     output directory provided by the user
-    If  a folder already exisst at that directory and the force option is selected,
-    it will forcefully overwrite this folder
+    If  a folder already exists at that directory and the force option is selected,
+    it will forcefully overwrite this folder.
     """
     io=PDBIO()
     io.set_structure(structure)
@@ -335,15 +330,12 @@ def save_structure(structure, options_output, options_verbose, options_force):
 
 
 #========================================================================
-def check_for_clashes(ref_structure, added_chain, options_verbose, success=False,PP=True, DNA1=None,DNA2=None):
+def check_for_clashes(ref_structure, added_chain, options_verbose,clash_treshold, DNA1=None, DNA2=None,success=False,PP=True):
     """
     Check for clashes between moving structure and refernce structure
     after they have been superimposed.
-
     Argument: reference structure and moving structure
-
     Returns: reference structure (added if number of clashes below threshold)
-
     """
 
     ref_atoms=[]
@@ -355,23 +347,23 @@ def check_for_clashes(ref_structure, added_chain, options_verbose, success=False
     Neighbor = NeighborSearch(ref_atoms) # using NeighborSearch from Biopython creating an instance Neighbor
     clashes = 0
     for atom in moving_atoms:     # Search for possible clashes between the atoms of the chain we want to add and the atoms already in the model
-        atoms_clashed = Neighbor.search(atom.coord,3 )
+        atoms_clashed = Neighbor.search(atom.coord,3)
 
         if len(atoms_clashed) > 0:
             clashes+=len(atoms_clashed)
 
-    if clashes < 100:   # If the clashes do not exceed a certain threshold add the chain to the model
+    if clashes < clash_treshold:   # If the clashes do not exceed a certain threshold add the chain to the model
 
-        present=[chain.id for chain in ref_structure.get_chains()]
+        present=[chain.id for chain in list(ref_structure.get_chains())]
         if added_chain.id in present:
             if PP==True:
                 added_chain.id= create_ID(present)  #create random id so it does not clash with the current chain ids in the PDB structure
             else:
-                added_chain.id= create_ID(present,DNA1,DNA2)
+                added_chain.id= create_ID(present, DNA1, DNA2)
         ref_structure[0].add(added_chain)
         success = True                          # set boolean because chain was added
         if options_verbose:
-            sys.stderr.write("The chain %s was added to the model\n" % (added_chain.id))
+            sys.stderr.write("Adding chain %s !\n" % (added_chain.id))
     else:
         if options_verbose:
             sys.stderr.write("The chain %s was not added to the model: too many clashes.\n" % (added_chain.id))

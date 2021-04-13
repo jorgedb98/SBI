@@ -1,6 +1,6 @@
 import os, sys, gzip, argparse, re, glob, numpy
 
-from functions import *
+from aitorfunc import *
 from Bio.PDB import *
 
 
@@ -54,8 +54,21 @@ parser.add_argument('-n','--nuc',
                     action="store",
                     help="Only needed when nucleotide-protein interactions are provided. The path to the file holding the model nucelic acid pdb file (for DNA or RNA) will be stored.\n")
 
-options=parser.parse_args()
+parser.add_argument('-c','--clashes',
+                    default=30,
+                    dest="clashes",
+                    action='store',
+                    type=int,
+                    help='Maximum number of clashes allowed when trying to superimpose two structures.\n')
 
+parser.add_argument('-t','--threshold',
+                    default=3,
+                    type=int,
+                    action='store',
+                    dest='threshold',
+                    help='Max RMSD treshold allowed when superimposing two structures.\n')
+
+options=parser.parse_args()
 
 if __name__=="__main__":
     absolute_path = os.getcwd()
@@ -89,9 +102,13 @@ if __name__=="__main__":
         if options.verbose:
             sys.stderr.write("You have not provided a stoichiometry. Your model will be built using the default value\n")
         stech_file={}
-        for key in structure_data:
-            stech_file[key]=1
-    #print(stech_file)
+        if interaction =="PP":
+            for key in structure_data:
+                stech_file[key]=1
+        else:
+            keys=set([x.split('.')[0] for x in structure_data.keys()])
+            for a in keys:
+                stech_file[a]=1
 
     if interaction == "PP": # When files contain PP complex
         if options.verbose:
@@ -128,7 +145,7 @@ if __name__=="__main__":
                 added_chain = [chain for chain in moving_structure.get_chains() if chain.id != possibility[1]][0]
                 sup.apply(added_chain.get_atoms()) # apply rotation matrix to moving structure
 
-                ref_structure, success =check_for_clashes(ref_structure, added_chain, options.verbose)
+                ref_structure, success =check_for_clashes(ref_structure, added_chain, options.verbose,clash_treshold=options.clashes)
 
                 if success is True:
                     nc+=1
@@ -145,7 +162,7 @@ if __name__=="__main__":
         save_structure(ref_structure[0], options.output, options.verbose, options.force)
 
 
-    elif interaction == "dNP":          # when file contains DNA chains and protein chain
+    elif interaction == "dNP":          # when file contains nucleotide chains and protein chain
         if options.verbose:
             sys.stderr.write("The files provided contain a double-strand Nucleotide-Protein interaction.\n")
 
@@ -167,7 +184,6 @@ if __name__=="__main__":
             ref_chain_seq+=(''.join([x.get_resname()[2] for x in ref_dna_chains[1]]))
         else:
             ref_chain_seq = ''.join([x.get_resname()[1] for x in ref_dna_chains[0]]) # get sequence in case of RNA
-            ref_chain_seq+=(''.join([x.get_resname()[1] for x in ref_dna_chains[1]]))
 
         # print(ref_chain_seq)
         for complex in stech_file.keys():                     # for all complexes that will be need for the stechiometry
@@ -176,56 +192,41 @@ if __name__=="__main__":
             complex_files = [x for x in structure_data.keys() if x.split('.')[0] == complex]   # if the first name of the complex_id is equal store it to list complex_files
             # i=0
             # while(i<stech_file[complex]):               # while the complex is needed as many times as indicated in the stechiometry
-            # a=0
+            a=0
             for protein_interaction in complex_files:
                 i=0
-
                 # print(protein_interaction)
                 # print(list(structure_data[protein_interaction].get_chains()))
                 dna_chain1 = list(structure_data[protein_interaction].get_chains())[1]      # get first nucleotide chain in structure
-                ref_dna_chain1 = ref_dna_chains[0]
-                moving_atoms, molecule=alpha_carbons_retriever(dna_chain1, options.verbose)
-
-                if molecule=="DNA":
-                    dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
-                else:
-                    dna_chain_seq = ''.join([x.get_resname()[1] for x in dna_chain1])
+                dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
                 #print(re.match(dna_chain_seq,ref_chain_seq))
-                align=pairwise2.align.globalxx(dna_chain_seq,ref_chain_seq)
                 possible_locations=[]
                 possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]    # span of matches
                 #print(possible_locations)
 
                 if not possible_locations:
                     dna_chain1 = list(structure_data[protein_interaction].get_chains())[2]      # get first nucleotide chain in structure
-                        if molecule=="DNA":
-                            dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
-                        else:
-                            dna_chain_seq = ''.join([x.get_resname()[1] for x in dna_chain1])          # get sequence
+                    dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
                     #print("Looking for a pattern as longest as %d" %(len(dna_chain_seq)))
                     possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]
 
                     if not possible_locations:
-                        print(protein_interaction)
                         if options.verbose:
                             sys.stderr.write("For chain %s no pattern matched with the reference nucleotide sequence\n" % (dna_chain1.id))
                         continue
 
                 while(i < stech_file[complex]):                     # while the complex is needed as many times as indicated in the stechiometry
-                    #print("JUNGE WAS SOLL DER SCHEIß\n")
                     start=possible_locations[i][0]          #Set the coordinate of where the first base of our DNA fragment is located
                     #print(start)
                     end=possible_locations[i][1]            #Set the coordinate of where the last base of our DNA fragment is located
                     #print(end)
                     possible_locations.append(possible_locations[i])  #Append the coordinates to the end of the list, in case we may need to reuse them
                     tmp_ref_atoms=ref_atoms[start:end]      #Extract the atoms our atoms from the big reference DNA from one of the possible locations(if available)
-    ###############
-    # !?!?!? WHY DOES MOVING_ATOMS SUDDENLY REACH THE LENGTH 12 WHEN DNA_CHAIN1 has a LENGTH OF 16 ??!?
 
-                    #print(len(moving_atoms),len(tmp_ref_atoms))
+                    moving_atoms, molecule=alpha_carbons_retriever(dna_chain1, options.verbose)
+
+                    #print(moving_atoms,tmp_ref_atoms)
                     if len(moving_atoms) != len(tmp_ref_atoms):
-                        # print(len(dna_chain1),len(dna_chain_seq), protein_interaction)
-                        # print(dna_chain_seq, moving_atoms, protein_interaction)
                         if options.verbose:
                             sys.stderr.write("Lengths are different. Chain %s will be ignored.\n" % (dna_chain1.id))
                         i += 1
@@ -233,8 +234,8 @@ if __name__=="__main__":
                         #print(moving_atoms)
                         #print(list(dna_chain1.get_atoms()))
                     sup=Superimposer()
-                    sup.set_atoms(tmp_ref_atoms,moving_atoms)
-                    #print(dna_chain_seq, ref_chain_seq)
+                    sup.set_atoms(tmp_ref_atoms, moving_atoms)
+                    # print(dna_chain_seq, ref_chain_seq[start:end])
 
                     if not sup.rms < 3:     # Check if RMSD is below threshold
                         i += 1
@@ -242,19 +243,16 @@ if __name__=="__main__":
                             sys.stderr.write("RMSD score was %d. Chain %s will be ignored.\n" % (sup.rms, dna_chain1.id))
                         continue
 
+                    # Apply rotation matrix to protein chain of structure:
                     chain_to_add=list(structure_data[protein_interaction].get_chains())[0]  # list of proteins for superimposed DNA strand
-                    to_add_dna1=list(structure_data[protein_interaction].get_chains())[1]
-                    to_add_dna1_id = to_add_dna1.id
-                    to_add_dna2=list(structure_data[protein_interaction].get_chains())[2]
-                    to_add_dna2_id = to_add_dna2.id
                     sup.apply(chain_to_add.get_atoms())     # apply translation and rotation matrix to chain
 
-                    ref_dna,success=check_for_clashes(ref_dna, chain_to_add, options.verbose,PP=False,DNA1=to_add_dna1_id,DNA2=to_add_dna2_id)
+                    ref_dna,success=check_for_clashes(ref_structure=ref_dna, added_chain=chain_to_add, options_verbose=options.verbose)
                     if success is True:
+                        if options.verbose:
+                            sys.stderr.write("RMSD score was %d. Chain %s was added.\n" % (sup.rms, dna_chain1.id))
                         i+=1 # increase stoichometry counter since new chain was added
 
-                    # a+=1
-                    #i += 1
 
         save_structure(ref_dna[0], options.output, options.verbose, options.force)
         #else cannot save as pdb -> save as MMCIFIO
