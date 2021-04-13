@@ -167,7 +167,7 @@ if __name__=="__main__":
             ref_chain_seq+=(''.join([x.get_resname()[2] for x in ref_dna_chains[1]]))
         else:
             ref_chain_seq = ''.join([x.get_resname()[1] for x in ref_dna_chains[0]]) # get sequence in case of RNA
-
+            ref_chain_seq+=(''.join([x.get_resname()[1] for x in ref_dna_chains[1]]))
 
         # print(ref_chain_seq)
         for complex in stech_file.keys():                     # for all complexes that will be need for the stechiometry
@@ -184,7 +184,12 @@ if __name__=="__main__":
                 # print(list(structure_data[protein_interaction].get_chains()))
                 dna_chain1 = list(structure_data[protein_interaction].get_chains())[1]      # get first nucleotide chain in structure
                 ref_dna_chain1 = ref_dna_chains[0]
-                dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
+                moving_atoms, molecule=alpha_carbons_retriever(dna_chain1, options.verbose)
+
+                if molecule=="DNA":
+                    dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
+                else:
+                    dna_chain_seq = ''.join([x.get_resname()[1] for x in dna_chain1])
                 #print(re.match(dna_chain_seq,ref_chain_seq))
                 align=pairwise2.align.globalxx(dna_chain_seq,ref_chain_seq)
                 possible_locations=[]
@@ -193,11 +198,15 @@ if __name__=="__main__":
 
                 if not possible_locations:
                     dna_chain1 = list(structure_data[protein_interaction].get_chains())[2]      # get first nucleotide chain in structure
-                    dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
+                        if molecule=="DNA":
+                            dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
+                        else:
+                            dna_chain_seq = ''.join([x.get_resname()[1] for x in dna_chain1])          # get sequence
                     #print("Looking for a pattern as longest as %d" %(len(dna_chain_seq)))
                     possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]
 
                     if not possible_locations:
+                        print(protein_interaction)
                         if options.verbose:
                             sys.stderr.write("For chain %s no pattern matched with the reference nucleotide sequence\n" % (dna_chain1.id))
                         continue
@@ -212,13 +221,11 @@ if __name__=="__main__":
                     tmp_ref_atoms=ref_atoms[start:end]      #Extract the atoms our atoms from the big reference DNA from one of the possible locations(if available)
     ###############
     # !?!?!? WHY DOES MOVING_ATOMS SUDDENLY REACH THE LENGTH 12 WHEN DNA_CHAIN1 has a LENGTH OF 16 ??!?
-                    moving_atoms, molecule=alpha_carbons_retriever(dna_chain1, options.verbose)
-
 
                     #print(len(moving_atoms),len(tmp_ref_atoms))
                     if len(moving_atoms) != len(tmp_ref_atoms):
                         # print(len(dna_chain1),len(dna_chain_seq), protein_interaction)
-                        print(dna_chain_seq, moving_atoms, protein_interaction)
+                        # print(dna_chain_seq, moving_atoms, protein_interaction)
                         if options.verbose:
                             sys.stderr.write("Lengths are different. Chain %s will be ignored.\n" % (dna_chain1.id))
                         i += 1
