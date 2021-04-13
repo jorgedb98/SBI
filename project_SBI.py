@@ -213,10 +213,12 @@ if __name__=="__main__":
     ###############
     # !?!?!? WHY DOES MOVING_ATOMS SUDDENLY REACH THE LENGTH 12 WHEN DNA_CHAIN1 has a LENGTH OF 16 ??!?
                     moving_atoms, molecule=alpha_carbons_retriever(dna_chain1, options.verbose)
-                    # print(len(dna_chain1))
+
 
                     #print(len(moving_atoms),len(tmp_ref_atoms))
                     if len(moving_atoms) != len(tmp_ref_atoms):
+                        # print(len(dna_chain1),len(dna_chain_seq), protein_interaction)
+                        print(dna_chain_seq, moving_atoms, protein_interaction)
                         if options.verbose:
                             sys.stderr.write("Lengths are different. Chain %s will be ignored.\n" % (dna_chain1.id))
                         i += 1
@@ -234,9 +236,13 @@ if __name__=="__main__":
                         continue
 
                     chain_to_add=list(structure_data[protein_interaction].get_chains())[0]  # list of proteins for superimposed DNA strand
+                    to_add_dna1=list(structure_data[protein_interaction].get_chains())[1]
+                    to_add_dna1_id = to_add_dna1.id
+                    to_add_dna2=list(structure_data[protein_interaction].get_chains())[2]
+                    to_add_dna2_id = to_add_dna2.id
                     sup.apply(chain_to_add.get_atoms())     # apply translation and rotation matrix to chain
 
-                    ref_dna,success=check_for_clashes(ref_dna, chain_to_add, options.verbose)
+                    ref_dna,success=check_for_clashes(ref_dna, chain_to_add, options.verbose,PP=False,DNA1=to_add_dna1_id,DNA2=to_add_dna2_id)
                     if success is True:
                         i+=1 # increase stoichometry counter since new chain was added
 
