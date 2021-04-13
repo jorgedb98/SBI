@@ -176,14 +176,17 @@ if __name__=="__main__":
             complex_files = [x for x in structure_data.keys() if x.split('.')[0] == complex]   # if the first name of the complex_id is equal store it to list complex_files
             # i=0
             # while(i<stech_file[complex]):               # while the complex is needed as many times as indicated in the stechiometry
-            a=0
+            # a=0
             for protein_interaction in complex_files:
                 i=0
+
                 # print(protein_interaction)
                 # print(list(structure_data[protein_interaction].get_chains()))
                 dna_chain1 = list(structure_data[protein_interaction].get_chains())[1]      # get first nucleotide chain in structure
+                ref_dna_chain1 = ref_dna_chains[0]
                 dna_chain_seq = ''.join([x.get_resname()[2] for x in dna_chain1])           # get sequence
                 #print(re.match(dna_chain_seq,ref_chain_seq))
+                align=pairwise2.align.globalxx(dna_chain_seq,ref_chain_seq)
                 possible_locations=[]
                 possible_locations=[x.span() for x in re.finditer(dna_chain_seq, ref_chain_seq)]    # span of matches
                 #print(possible_locations)
@@ -199,7 +202,7 @@ if __name__=="__main__":
                             sys.stderr.write("For chain %s no pattern matched with the reference nucleotide sequence\n" % (dna_chain1.id))
                         continue
 
-                while(i<stech_file[complex]):                     # while the complex is needed as many times as indicated in the stechiometry
+                while(i < stech_file[complex]):                     # while the complex is needed as many times as indicated in the stechiometry
                     #print("JUNGE WAS SOLL DER SCHEIß\n")
                     start=possible_locations[i][0]          #Set the coordinate of where the first base of our DNA fragment is located
                     #print(start)
@@ -207,8 +210,8 @@ if __name__=="__main__":
                     #print(end)
                     possible_locations.append(possible_locations[i])  #Append the coordinates to the end of the list, in case we may need to reuse them
                     tmp_ref_atoms=ref_atoms[start:end]      #Extract the atoms our atoms from the big reference DNA from one of the possible locations(if available)
-
-                    # !?!?!? WHY DOES MOVING_ATOMS SUDDENLY REACH THE LENGTH 12 WHEN DNA_CHAIN1 has a LENGTH OF 16 ??!?
+    ###############
+    # !?!?!? WHY DOES MOVING_ATOMS SUDDENLY REACH THE LENGTH 12 WHEN DNA_CHAIN1 has a LENGTH OF 16 ??!?
                     moving_atoms, molecule=alpha_carbons_retriever(dna_chain1, options.verbose)
                     # print(len(dna_chain1))
 
@@ -220,7 +223,6 @@ if __name__=="__main__":
                         continue
                         #print(moving_atoms)
                         #print(list(dna_chain1.get_atoms()))
-                    #align_chains()
                     sup=Superimposer()
                     sup.set_atoms(tmp_ref_atoms,moving_atoms)
                     #print(dna_chain_seq, ref_chain_seq)
@@ -235,10 +237,11 @@ if __name__=="__main__":
                     sup.apply(chain_to_add.get_atoms())     # apply translation and rotation matrix to chain
 
                     ref_dna,success=check_for_clashes(ref_dna, chain_to_add, options.verbose)
+                    if success is True:
+                        i+=1 # increase stoichometry counter since new chain was added
 
-            # a+=1
-
-                    i += 1
+                    # a+=1
+                    #i += 1
 
         save_structure(ref_dna[0], options.output, options.verbose, options.force)
         #else cannot save as pdb -> save as MMCIFIO
