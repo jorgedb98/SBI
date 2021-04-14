@@ -1,4 +1,4 @@
-infinite# MACROBUILDER
+# MACROBUILDER
 *by Aitor, Jorge and Lilian*
 
 # Table of Content
@@ -6,6 +6,7 @@ infinite# MACROBUILDER
 - [1. Introduction](#introduction)
 - [2. Tutorial](#tutorial)
   - [2.1 Installation](#installation)
+  - [2.2 File Format](#fileformat)
 - [3. Theory](#Theory)
   - [3.1. Method and algorithm](#Method_and_algorithm)
   - [3.2. Biological problem](#Biological_problem)
@@ -17,7 +18,7 @@ infinite# MACROBUILDER
 <!-- /TOC -->
 
 # 1. Introduction
-`project_SBI.py` is a python script built as final project for both Python and Structural Bioinformatics subject from the Msc in Bioinformatics for the Health Sciences. The aim of this program is to reconstruct macrocomplexes from `pdb` files for protein-protein or RNA/DNA-protein.
+`project_SBI.py` is a python script built as final project for both Python and Structural Bioinformatics subject from the M.Sc in Bioinformatics for the Health Sciences. The aim of this program is to reconstruct macro-complexes from `pdb` files for protein-protein or RNA/DNA-protein.
 
 
 # 2. Tutorial
@@ -42,16 +43,7 @@ __stoichiometry file__
 ```
 '-s', '--stoichiometry'
 ```
-The stoichiometry argument is optional. If the user knows the stoichiometry of the final complex, he can provide the __Path__ to the file containing the stoichiometry. Depending on the type of complex, the stoichiometry file should be in a certain format.
-Protein-Protein Complex:
-
-|         | Protein-Protein                     | Protein-Nucleotide                            |  
-|--------:|-------------------------------------|-----------------------------------------------|
-| Format  | [filename1]:3                       | [protein_complex1]:1                          |   
-|         | [filename2]:2                       | [protein_complex2]:3                          |   
-| Example | 1gzx_A_D:3                          | P05412:1                                      |   
-|         | 1gzxA_C:2                           | P15336:3                                      |   
-
+The stoichiometry argument is optional. If the user knows the stoichiometry of the final complex, he can provide the __Path__ to the file containing the stoichiometry. Depending on the type of complex, the stoichiometry file should be in a certain format, as described in section [2.2 File Format](#fileformat).
 
 __Nucleotide__
 ```
@@ -110,7 +102,38 @@ __Model Evaluation__
 '-ev','--eval'
 ```
 
-This options allows the user to select wheter to evaluate the macrocomplex built or not. Please, notice if set to true, it is compulsory that the input file name is the same as the pdb id for reference structure.
+This options allows the user to select whether to evaluate the macro-complex built or not. Please note that if set to true, it is compulsory that the naming of the input files has to contain the pdb-ID of the reference structure in the correct format as descirbed in [2.2 File Format](#fileformat).
+
+
+## 2.2 File Format
+The program can be divided into two main parts: modeling protein-protein complexes and modeling complexes containing proteins and nucleotide sequences. In both cases, the user is requested to provide the input and stechiometry in a certain format to allow the program to run smoothly.
+
+In the first case of protein-protein case, the files within the input folder should best have the following format:
+          XXXX_A_B.pdb
+where X is the 4 letter pdb-ID and A and B the chain IDs. An example for this can be seen in [6.1. 1gzx](#1gzx).
+
+The chain ID can be repeated between files but not within a file. It does not matter if different chains have the same chain ID (the program will not assume chain A in one file equals chain A of another file). The stoichometry file, if provided, should hold the following format using the full filename:
+
+                  |         | Protein-Protein                     |
+                  |--------:|-------------------------------------|
+                  | Format  | [filename1]:3                       |
+                  |         | [filename2]:2                       |
+                  | Example | 1gzx_A_D:3                          |
+                  |         | 1gzxA_C:2                           |
+
+For the second case of a complex containing a nucleotide complex, the files should be formatted in the following manner:
+          YYYYYY.DNA.XXXX_A_EF.pdb
+
+where the 6 Ys are placeholders for the sprot-ID of the proteincomplex, the X again replace the pdb-ID, A is the protein chain and EF will be the two double strand DNA chains ( {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb ). An example for this can be seen in [6.2. 26O1](#26O1).
+
+The stoichometry file should be presented as the following:
+
+                  |         | Protein-Nucleotide                            |  
+                  |--------:|-----------------------------------------------|
+                  | Format  | [protein_complex1]:1                          |   
+                  |         | [protein_complex2]:3                          |   
+                  | Example | P05412:1                                      |   
+                  |         | P15336:3                                      |   
 
 
 # 3. Theory
@@ -160,8 +183,7 @@ The program will superimpose the reference structure to the model and prints the
 ### 3.1.2. Protein-Nucleic Acids
 - for RNA and DNA the naming of the files has to be the given format
 __Input folder by the User__
-For the provided input folder from the user, the naming of the files holds more information in this case:
-        {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb
+For the provided input folder from the user, the naming of the files holds more information as for protein-protein complex, as described in [2.2 File Format](#fileformat).
 
 For a complex containing DNA, we take the provided DNA strand as our reference and look for sufficient alignments among the DNA strands in the provided pdb files. As soon as an alignment has been obtained that passes the threshold, we will superimpose the two strands. The program will first compare the forward and then the reversed DNA strand to the reference DNA, if the first strand did not pass the alignment threshold. The threshold for the alignment here is set to 75% as we know that DNA strands can be shorter and thus a higher percentage will rule out many reasonable alignments simply because the compared DNA strand is very short.
 
@@ -170,7 +192,7 @@ Once an alignment was found high enough and the two DNA strands are superimposed
 **IMPORTANT ASSUMPTION: WE WON'T LOOK FOR CLASHES IN DNA AND PROTEINS SINCE WE ASSUME WE ARE BUILDING SUCH A COMPLEX THAT THIS ONE BE A PROBLEM.
 
 ## 3.2. Biological Problems
-Past studies suggest that proteins may not work individually, but they will rather form a complex with other molecules in order to full fill certain functions. A classic examples for a model of an interaction can be found for ribosome or enzymes like the NADH dehydrogenase. While traditional experimental techniques such as x-ray crystallography and nuclear magnetic resonance (NMR) spectroscopy have been crucial in characterising the structure of a great amount of proteins, the evidence on structures of macrocomplexes is still scarce given the large size and structural flexibility these molecules present.
+Past studies suggest that proteins may not work individually, but they will rather form a complex with other molecules in order to full fill certain functions. A classic examples for a model of an interaction can be found for ribosome or enzymes like the NADH dehydrogenase. While traditional experimental techniques such as x-ray crystallography and nuclear magnetic resonance (NMR) spectroscopy have been crucial in characterising the structure of a great amount of proteins, the evidence on structures of macro-complexes is still scarce given the large size and structural flexibility these molecules present.
 
 However, with the rapid development of computers and decay in the computational hardware cost, fields such as computational biology have greatly bloomed, and provide promising help in predicting structures of macrocomplexes _1_ in silico _1_ based on the huge amount of data recovered by traditional techniques. Our project takes a simple approach to this problem by employing superimpostion between highly similar chains as a basis. __Superimposition__ is defined as the procedure by which which two molecule structures (two proteins, two DNA/RNA molecules, etc) are placed in space-minimizing the distance between backbone atoms of both structures. If we were to compare sequence alignment with structural alignment, equivalent residues would be the ones filling the same position in a multiple alignment (according to a sequence similarity score), in structural alignment equivalent residues would be the the closest ones.
 
@@ -195,14 +217,14 @@ One option here could be to,
 
 In this context, it could also be interesting to create more than one model and compare their statistical potential, for example using PROSA to separate weak models.
 
-So far, the program can only be run from the command line. As we decided to give the user quite a high number of options to be defined, it could be interesting to code a GUI that gives a better overview on the different arguments. We started coding a GUI using tkinter, however, we did not manage to finish it before the deadline.
+So far, the program can only be run from the command line. As we decided to give the user quite a high number of options to be defined, it could be interesting to code a GUI that gives a better overview on the different arguments. We started coding a GUI using tkinter, however, it is still in progress and thus something we will proceed working on past the deadline.
 
 Last, but not least, it is important to mention the computational toll the program supposes. Due to the high number of comparisons and alignments performed in order to add a new chain to the model, as the model keeps growing, each step takes more time, which is further exemplified when we try to build an infinite model. In those scenarios, the program does take a long time to run and depending on the available hardware resources, it may even crash if not careful enough.
 
 
 # 6. Examples
 ## 6.1. Protein-Protein Complex: 1gzx
-As the first simple example for a protein-protein macrocomplex, we will present the heteromer [1gzx](https://www.rcsb.org/structure/1GZX). It is a heamoglobin consisting of four chains as it can be seen in the following figure.
+As the first simple example for a protein-protein macrocomplex, we will present the heteromer [1gzx](https://www.rcsb.org/structure/1GZX). It is a haemoglobin consisting of four chains as it can be seen in the following figure.
 
 <img src="./img/1gzx_assembly.png" alt="pdb1gz" width="300"/>
 
