@@ -185,7 +185,7 @@ if __name__=="__main__":
                 a=retriever.retrieve_pdb_file(PDB_id,file_format="pdb")
                 pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
                 pdb_original=pdb_parser.get_structure("ref",a)
-                sys.stdout.write("\nStarting model evaluation...\n")
+                sys.stdout.write("\nStarting model evaluation against %s...\n" %PDB_id)
             except:
                 raise ValueError("It was not possible to extract a reference model from PDB.")
             os.chdir(absolute_path)
@@ -233,12 +233,14 @@ if __name__=="__main__":
         ref_dna_chains = list(ref_dna.get_chains())           # Get the strands of reference nucleotide chain
 
         ref_atoms,molecule=alpha_carbons_retriever(ref_dna_chains[0], options.verbose)
-        ref_atoms2, molecule=alpha_carbons_retriever(ref_dna_chains[1], options.verbose)
-        ref_atoms.extend(ref_atoms2)
+        if len(ref_dna_chains)>1:
+            ref_atoms2, molecule=alpha_carbons_retriever(ref_dna_chains[1], options.verbose)
+            ref_atoms.extend(ref_atoms2)
 
-        if molecule =="DNA":
+        if molecule =="DNA" or molecule == "RNA":
             ref_chain_seq = ''.join([x.get_resname()[2] for x in ref_dna_chains[0]]) # Get sequence in case of DNA
-            ref_chain_seq+=(''.join([x.get_resname()[2] for x in ref_dna_chains[1]]))
+            if len(ref_dna_chains)>1:
+                ref_chain_seq+=(''.join([x.get_resname()[2] for x in ref_dna_chains[1]]))
         else:
             ref_chain_seq = ''.join([x.get_resname()[1] for x in ref_dna_chains[0]]) # Get sequence in case of RNA
 
@@ -309,7 +311,7 @@ if __name__=="__main__":
                 a=retriever.retrieve_pdb_file(PDB_id,file_format="pdb")
                 pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
                 pdb_original=pdb_parser.get_structure("ref",a)
-                sys.stdout.write("\nStarting model evaluation...\n")
+                sys.stdout.write("\nStarting model evaluation against %s...\n" %PDB_id)
             except:
                 raise ValueError("It was not possible to extract a reference model from PDB.")
             os.chdir(absolute_path)
@@ -317,7 +319,7 @@ if __name__=="__main__":
             analyses=open("rmsd_analysis.txt","w")
 
             ref_chains=list(pdb_original.get_chains())      # Extract chain from reference model
-            our_chains=list(ref_dna.get_chains())           # Extrac chain from our built-in model
+            our_chains=list(ref_dna.get_chains())           # Extract chain from our built-in model
             analyses.write("The PDB extracted model has %d chains and the model built has %d chains\n" % (len(ref_chains),len(our_chains)))
             for chain1 in ref_chains:
                 atom_chain1, molecule = alpha_carbons_retriever(chain1, options.verbose)
