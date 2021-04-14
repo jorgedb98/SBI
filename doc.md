@@ -22,7 +22,7 @@ infinite# MACROBUILDER
 
 # 2. Tutorial
 ## 2.1 Installation
-Just download the good sh*it from github!!!!!!!!! It's free real state!!!!!!!!
+
 ## Usage from the Terminal
 In order for the program to run, the user simply has to execute the python script called __project.py__ and provide the obligatory arguments to obtain the model. A detailed explanation of possible arguments that may be provided to the program are listed below:
 
@@ -83,6 +83,28 @@ __Max Iterations__
 ```
 The option max_iter specifies the number of maximal iterations to go over the input files to build the model so the program will not run indefinitely when infinte structures are built or if no new chains can be added to the model. The default value is set to 100, thus, when provided a high number of files the program might exit before the structure is finished.
 
+__Protien-Protein / Protein-Nucleic Acid discrimination__
+```
+'-wt','--no_template'
+```
+
+This option allows the program to differenciate between protein-protein interactions and protein-nucleic acid interaction. By default, its values is set to 'nt', this means there is no nucleic acid template, thus the program will run under assumption of protein-protein interaction.
+However, if it is set to 'wt', then the program will run for protein-nucleic acid, yet the user should provide the template for the nucleic acid.
+
+__Nuc templae__
+```
+'-n', '---nuc'
+```
+
+Given the case the program runs model reconstruction for protein-nucleic acid interaction, the user must provide the reference structure of the nucleotide sequence (RNA or DNA).
+
+__Threshold__
+```
+'-t','--threshold'
+```
+
+This option allows the user to change the threshold for number of clashes when superimposing protein chains. By default, it is set to 30, however it can be modified. Please, be aware the the highest the value, the worse the result.
+
 # 3. Theory
 ## 3.1. Method and algorithm
 The program takes a general approach shared for both kind of inputs (Protein-Protien & Nucleic Acid-Protein).
@@ -101,13 +123,14 @@ Once this is done, the program will differentiate between protein-protein and nu
 According to this, chain type is selected and the alpha carbons or C4's are retrieved.
 
 ### 3.1.1. Protein-protein
-If chain-type is protein, then a message will prompt saying so to the terminal (given the case the user has selected so with the option verbose).
+If the user does not indicate the 'wt' option, and the chain-type is protein, a message will prompt saying so to the terminal (given the case the user has selected so with the option verbose).
 
-Next, the program will start constructing the model. **First**, it will take the first binary field as reference structure and will iterate over the other files until the number of chains added is the same as the sum of the stoichiometry required (if not stoichiometry was provided, by default the program will ad each binary once to the final model).
-<<<<<<< HEAD
-=======
+Next, the program will start constructing the model. **First**, the program assigns the one of the structures as the reference structure. We made sure that the file chosen as the reference is included in the stoichiometry for the model.
+It then starts to iterate over the other binary structures until the number of chains added is the same as the sum of the stoichiometry required (if not stoichiometry was provided, by default the program will ad each binary once to the final model). During this iteration, the function `superimpose_chains` will align the moving structure with the reference structure. If the alignment score is above the predefined threshold of 0.95, we use the  `Superimposer ` from  `Biopython` to obtain the rotation and translation matrix for the superimposition of the reference chain and the moving chain.  `Superimposer` further comes with the option to obtain the RMSD for the superimposition. If the RMSD is below 2, we can assume that the superimposed objects are highly similar. In this case, we add the possible superimposition to the dictionary file that will be returned by the function `superimpose_chains`. If no superimpositions have been found, our program will prompt a message accordingly.
+In case, the dictionary of possible superimpositions is not empty, we will use the  `NeighbourSearch` from  `Biopython` to check if the not imposed
+the second chain of the moving structure that was not superimposed, will be added
 
->>>>>>> ea4fe96f57fc5c07d21b058c79ad16f0280b42f5
+
 ### 3.1.2. Protein-Nucleic Acids
 - for RNA and DNA the naming of the files has to be the given format
 __Input folder by the User__
