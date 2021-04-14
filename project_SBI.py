@@ -68,12 +68,20 @@ parser.add_argument('-t','--threshold',
                     dest='threshold',
                     help='Max RMSD treshold allowed when superimposing two structures.\n')
 
+parser.add_argument('-e','--evaluate',
+                    default=False,
+                    action='store_true',
+                    dest='eval',
+                    help='If the user provides this argument, the program will try to download a reference PDB and calculate the RMSD of chains that can be superimposed. An additional file named Analysis.txt will be generated in the output folder.')
+
 parser.add_argument('-wt','--no_template',
                     default='nt',
                     action="store_true",
                     dest='wt',
                     help='Call this argument in case the user wants to build a model Protein-DNA interaction model \
                     based on a reference DNA chain\n.')
+
+
 
 options=parser.parse_args()
 
@@ -169,29 +177,47 @@ if __name__=="__main__":
                 break
         save_structure(ref_structure[0], options.output, options.verbose, options.force)
 
-        PDB_id= list(stech_file.keys())[0].split('_')[0]
+        # Evaluation of the model if selected
+        if options.eval is True:
+            try:                                                # Select the PDB_id from the stechiometry files, since our approach for protein-protein allows it
+                PDB_id= list(stech_file.keys())[0].split('_')[0]
+                retriever=PDBList()
+                a=retriever.retrieve_pdb_file(PDB_id,file_format="pdb")
+                pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
+                pdb_original=pdb_parser.get_structure("ref",a)
+                sys.stdout.write("\nStarting model evaluation...\n")
+            except:
+                raise ValueError("It was not possible to extract a reference model from PDB.")
+            os.chdir(absolute_path)
+            os.chdir(options.output)
+            analyses=open("rmsd_analysis.txt","w")              # Keep output messages into something new
 
-        os.chdir(absolute_path)
-        os.chdir(options.output)
-        analyses=open("rmsd_analysis.txt","w")
-        retriever=PDBList()
-        a=retriever.retrieve_pdb_file(PDB_id,file_format="pdb")
-        pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
-        pdb_original=pdb_parser.get_structure("ref",a)
-        ref_chains=list(pdb_original.get_chains())
-        our_chains=list(ref_structure.get_chains())
-        analyses.write("The PDB extracted model has %d chains and the model built has %d chains\n" % (len(ref_chains),len(our_chains)))
-        for chain1 in ref_chains:
-            for chain2 in our_chains:
-                if align_chains_peptides(chain1,chain2) > 0.95:
-                    ref_atoms, molecule= alpha_carbons_retriever(chain1,options.verbose)
-                    our_atoms, molecule= alpha_carbons_retriever(chain2,options.verbose)
-                    sup=Superimposer()
-                    sup.set_atoms(ref_atoms,our_atoms)
-                    analyses.write("The RMSD between chains %s (PDB model) and %s (model built) is %f\n" % (chain1.id,chain2.id,sup.rms))
-        analyses.close()
-        shutil.rmtree("gz")
-        shutil.rmtree("obsolete")
+            ref_chains=list(pdb_original.get_chains())          # Select reference chain
+            our_chains=list(ref_structure.get_chains())         # and chain to add
+            analyses.write("The PDB extracted model has %d chains and the model built has %d chains\n" % (len(ref_chains),len(our_chains)))
+
+            # Superimpose the chains, but first it will look for DNA sequences and skip them
+            for chain1 in ref_chains:
+                atom_chain1, molecule = alpha_carbons_retriever(chain1, options.verbose)
+                if molecule == 'Protein':
+                    for chain2 in our_chains:
+                        atom_chain2, molecule2 = alpha_carbons_retriever(chain2, options.verbose)
+                        if molecule2 == "Protein":
+                            if align_chains_peptides(chain1,chain2) > 0.95:
+                                sup=Superimposer()
+                                sup.set_atoms(atom_chain1,atom_chain2)
+                                analyses.write("The RMSD between chains %s (PDB model) and %s (model built) is %f\n" % (chain1.id,chain2.id,sup.rms))
+                        else:
+                            sys.stdout.write("Skipping chain %s, only superimposing protein chains\n" %(chain2.id))
+                            continue
+                else:
+                    sys.stdout.write("Skipping chain %s, only superimposing protein chains\n" %(chain1.id))
+                    continue
+            analyses.close()
+            to_keep=['final_complex.pdb','rmsd_analysis.txt']
+            for file in os.listdir():
+                if not file in to_keep:
+                    shutil.rmtree(file)
 
     else:                               # Options.wt == True; when file contains nucleotide chains and protein chain
         if options.verbose:
@@ -271,3 +297,48 @@ if __name__=="__main__":
                     i=+1                 # Increase stoichometry counter since new chain was added
 
         save_structure(ref_dna[0], options.output, options.verbose, options.force)  # Return the final PDB
+
+        # Evaluation of the model if selected
+        if options.eval is True:
+            id_list=options.input.split('/')                # Id for reference pdb from input folder
+            PDB_id=id_list.pop()
+            while len(PDB_id)<1:
+                PDB_id=id_list.pop()
+            try:
+                retriever=PDBList()
+                a=retriever.retrieve_pdb_file(PDB_id,file_format="pdb")
+                pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
+                pdb_original=pdb_parser.get_structure("ref",a)
+                sys.stdout.write("\nStarting model evaluation...\n")
+            except:
+                raise ValueError("It was not possible to extract a reference model from PDB.")
+            os.chdir(absolute_path)
+            os.chdir(options.output)
+            analyses=open("rmsd_analysis.txt","w")
+
+            ref_chains=list(pdb_original.get_chains())      # Extract chain from reference model
+            our_chains=list(ref_dna.get_chains())           # Extrac chain from our built-in model
+            analyses.write("The PDB extracted model has %d chains and the model built has %d chains\n" % (len(ref_chains),len(our_chains)))
+            for chain1 in ref_chains:
+                atom_chain1, molecule = alpha_carbons_retriever(chain1, options.verbose)
+                if molecule == 'Protein':
+                    for chain2 in our_chains:
+                        atom_chain2, molecule2 = alpha_carbons_retriever(chain2, options.verbose)
+                        if molecule2 == "Protein":
+                            if align_chains_peptides(chain1,chain2) > 0.95:
+                                if len(atom_chain1) == len(atom_chain2):                 # Only work for same size, in case there are weird heteroatoms
+                                    sup=Superimposer()
+                                    sup.set_atoms(atom_chain1,atom_chain2)
+                                    analyses.write("The RMSD between chains %s (PDB model) and %s (model built) is %f\n" % (chain1.id,chain2.id,sup.rms))
+
+                        else:
+                            sys.stdout.write("Skipping chain %s, only superimposing protein chains\n" %(chain2.id))
+                            continue
+                else:
+                    sys.stdout.write("Skipping chain %s, only superimposing protein chains\n" %(chain1.id))
+                    continue
+            analyses.close()
+            to_keep=['final_complex.pdb','rmsd_analysis.txt']
+            for file in os.listdir():
+                if not file in to_keep:
+                    shutil.rmtree(file)
