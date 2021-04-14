@@ -86,7 +86,12 @@ parser.add_argument('-wt','--no_template',
 options=parser.parse_args()
 
 if __name__=="__main__":
-    absolute_path = os.getcwd()
+    absolute_path = os.getcwd() # Set variable for working directory
+
+    ##########################################
+    ###       PROCESSING INPUT FILES       ###
+    ##########################################
+
     try:
         work_files=check_files(options.input)
     except NotADirectoryError as e:
@@ -97,9 +102,12 @@ if __name__=="__main__":
 
     # Get all the files as structures in a dictionary with the pdb parser from the Bio package and the function we built around it
     structure_data, interaction=read_pdb_files(work_files, options.verbose)
-    os.chdir(absolute_path)                                # After processing input files get back to main working directory
+    os.chdir(absolute_path)            # After processing input files get back to main working directory
 
-    # Process Stoichiometry
+    ##########################################
+    ###        PROCESSING STECHIOMETRY     ###
+    ##########################################
+
     if options.stechiometry:
         if options.verbose:
             sys.stdout.write("You have provided the stoichiometry found in %s\n" % (options.stechiometry))
@@ -123,6 +131,10 @@ if __name__=="__main__":
             keys=set([x.split('.')[0] for x in structure_data.keys()])
             for a in keys:
                 stech_file[a]=1
+
+    ##########################################
+    ###     PROTEIN PROTEIN INTERACTION    ###
+    ##########################################
 
     if options.wt == "nt":                             # When files contain PP complex
         if options.verbose:
@@ -177,7 +189,9 @@ if __name__=="__main__":
                 break
         save_structure(ref_structure[0], options.output, options.verbose, options.force)
 
-        # Evaluation of the model if selected
+        ############################################
+        ### EVALUATE PROTEIN PROTEIN INTERACTION ###
+        ############################################
         if options.eval is True:
             try:                                                # Select the PDB_id from the stechiometry files, since our approach for protein-protein allows it
                 PDB_id= list(stech_file.keys())[0].split('_')[0]
@@ -185,7 +199,7 @@ if __name__=="__main__":
                 a=retriever.retrieve_pdb_file(PDB_id,file_format="pdb")
                 pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
                 pdb_original=pdb_parser.get_structure("ref",a)
-                sys.stdout.write("\nStarting model evaluation...\n")
+                sys.stdout.write("\nStarting model evaluation against %s...\n" %PDB_id)
             except:
                 raise ValueError("It was not possible to extract a reference model from PDB.")
             os.chdir(absolute_path)
@@ -220,6 +234,10 @@ if __name__=="__main__":
                     shutil.rmtree(file)
 
     else:                               # Options.wt == True; when file contains nucleotide chains and protein chain
+
+    ##################################################
+    ###        PROTEIN NUCLEIC ACID INTERACTION    ###
+    ##################################################
         if options.verbose:
             sys.stdout.write("The files provided contain a double-strand Nucleotide-Protein interaction.\n")
 
@@ -233,12 +251,14 @@ if __name__=="__main__":
         ref_dna_chains = list(ref_dna.get_chains())           # Get the strands of reference nucleotide chain
 
         ref_atoms,molecule=alpha_carbons_retriever(ref_dna_chains[0], options.verbose)
-        ref_atoms2, molecule=alpha_carbons_retriever(ref_dna_chains[1], options.verbose)
-        ref_atoms.extend(ref_atoms2)
+        if len(ref_dna_chains)>1:
+            ref_atoms2, molecule=alpha_carbons_retriever(ref_dna_chains[1], options.verbose)
+            ref_atoms.extend(ref_atoms2)
 
-        if molecule =="DNA":
+        if molecule =="DNA" or molecule == "RNA":
             ref_chain_seq = ''.join([x.get_resname()[2] for x in ref_dna_chains[0]]) # Get sequence in case of DNA
-            ref_chain_seq+=(''.join([x.get_resname()[2] for x in ref_dna_chains[1]]))
+            if len(ref_dna_chains)>1:
+                ref_chain_seq+=(''.join([x.get_resname()[2] for x in ref_dna_chains[1]]))
         else:
             ref_chain_seq = ''.join([x.get_resname()[1] for x in ref_dna_chains[0]]) # Get sequence in case of RNA
 
@@ -298,7 +318,10 @@ if __name__=="__main__":
 
         save_structure(ref_dna[0], options.output, options.verbose, options.force)  # Return the final PDB
 
-        # Evaluation of the model if selected
+        ######################################################
+        ###        EVALUATE PROTEIN NUCLEIC ACID MODEL     ###
+        ######################################################
+
         if options.eval is True:
             id_list=options.input.split('/')                # Id for reference pdb from input folder
             PDB_id=id_list.pop()
@@ -309,7 +332,7 @@ if __name__=="__main__":
                 a=retriever.retrieve_pdb_file(PDB_id,file_format="pdb")
                 pdb_parser=PDBParser(PERMISSIVE=1, QUIET=True)
                 pdb_original=pdb_parser.get_structure("ref",a)
-                sys.stdout.write("\nStarting model evaluation...\n")
+                sys.stdout.write("\nStarting model evaluation against %s...\n" %PDB_id)
             except:
                 raise ValueError("It was not possible to extract a reference model from PDB.")
             os.chdir(absolute_path)

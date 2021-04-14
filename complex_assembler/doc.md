@@ -23,6 +23,11 @@
 
 # 2. Tutorial
 ## 2.1 Installation
+To install the program, please download the github repository and clone it somewhere in your local workspace. Once cloned, access the complex_assembler folderand run the following command:
+
+```
+sudo python3 setup.py install
+```
 
 ## Usage from the Terminal
 In order for the program to run, the user simply has to execute the python script called __project.py__ and provide the obligatory arguments to obtain the model. A detailed explanation of possible arguments that may be provided to the program are listed below:
@@ -106,11 +111,12 @@ This options allows the user to select whether to evaluate the macro-complex bui
 
 
 ## 2.2 File Format
-The program can be divided into two main parts: modeling protein-protein complexes and modeling complexes containing proteins and nucleotide sequences. In both cases, the user is requested to provide the input and stechiometry in a certain format to allow the program to run smoothly.
+The program can be divided into two main parts: modelling protein-protein complexes and modeling complexes containing proteins and nucleotide sequences. In both cases, the user is requested to provide the input and stoichiometry in a certain format to allow the program to run smoothly.
 
-In the first case of protein-protein case, the files within the input folder should best have the following format:
+In the first case of __protein-protein complex__, the files within the input folder should best have the following format:
           XXXX_A_B.pdb
-where X is the 4 letter pdb-ID and A and B the chain IDs. An example for this can be seen in [6.1. 1gzx](#1gzx).
+where X is the 4 letter pdb-ID and A and B the chain IDs. This is especially relevant in case, the user wants to include the `-e` option to evaluate the final model by comparing it to a refernce structure, because the reference structure will be taken from the pdb-code here.
+
 
 The chain ID can be repeated between files but not within a file. It does not matter if different chains have the same chain ID (the program will not assume chain A in one file equals chain A of another file). The stoichometry file, if provided, should hold the following format using the full filename:
 
@@ -120,21 +126,28 @@ The chain ID can be repeated between files but not within a file. It does not ma
                   |         | [filename2]:2                       |
                   | Example | 1gzx_A_D:3                          |
                   |         | 1gzxA_C:2                           |
+|   |   |   |
+An example for this can be seen in [6.1. 1gzx](#1gzx).
 
-For the second case of a complex containing a nucleotide complex, the files should be formatted in the following manner:
+
+For the second case of a __complex containing nucleotide chain()__, depending on the information a file contains, two approaches are available:
+In one tthe files should be formatted in the following manner:
           YYYYYY.DNA.XXXX_A_EF.pdb
 
-where the 6 Ys are placeholders for the sprot-ID of the proteincomplex, the X again replace the pdb-ID, A is the protein chain and EF will be the two double strand DNA chains ( {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb ). An example for this can be seen in [6.2. 26O1](#26O1).
+where the 6 Ys are placeholders for the sprot-ID of the proteincomplex, the X again replace the pdb-ID, A is the protein chain and EF will be the two double strand DNA chains ( {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb ). In case of a one stranded RNA, the file name would hold only 'E' instead of 'EF'.
 
 The stoichometry file should be presented as the following:
 
-                  |         | Protein-Nucleotide                            |  
-                  |--------:|-----------------------------------------------|
-                  | Format  | [protein_complex1]:1                          |   
-                  |         | [protein_complex2]:3                          |   
-                  | Example | P05412:1                                      |   
-                  |         | P15336:3                                      |   
+                  |         | Protein-Nucleotide                 |  
+                  |--------:|------------------------------------|
+                  | Format  | [protein_complex1]:1               |   
+                  |         | [protein_complex2]:3               |   
+                  | Example | P05412:1                           |   
+                  |         | P15336:3                           |   
 
+Additionally, the user is requested to provide a the path to a file of a reference nucleotide using the `-n` argument. This file does not have to be named specifically but should only contain one or two nucleotide strands, no further peptide sequences.
+
+An example for a protein-nucleotide complex can be seen in [6.2. 26O1](#26O1).
 
 # 3. Theory
 ## 3.1. Method and algorithm
@@ -179,12 +192,20 @@ The user can specify the option `-e` to run an evaluation after the model was bu
 
 The program will superimpose the reference structure to the model and prints the RMSD to the analysis file. This gives the user an idea on the goodness of the model given a reference structure is known.
 
-
 ### 3.1.2. Protein-Nucleic Acids
-- for RNA and DNA the naming of the files has to be the given format
-__Input folder by the User__
 For the provided input folder from the user, the naming of the files holds more information as for protein-protein complex, as described in [2.2 File Format](#fileformat).
 
+For example, one file could be name P05412.DNA.1t2k_C_EF.pdb, meaning P05412is the protein complex, having DNA which binds toprotain domain 1t2k chian C, and DNA chians ids are E and F.
+
+In this case, the user must have provided also a reference structure of DNA against which the comparison will be done for each file.Since the program works for both DNA and RNA, it also takes into account how many chains this reference structure has.
+
+The program calculates the nucleotide sequence for the reference nucleic sequence (and in case it is double-stranded, it appends the second strand to the first one), so it will be used as template for looking each DNA chain. So, for each file, the program will take the first DNA chian and get its sequence, and compare it to the reference nucleic acid sequence in order to find the matches; if no matches were found in the first chain it will look for matches in the second one, given the case there are 2 chains in the input files.
+
+So, for each complex inside the stechiometry file, while the it is needed as many times as indicated, the program will loop to construct it. for this purpose, it sets the coordinate of where the first base of our DNA fragment is located and the coordinate of where the last base of our DNA fragment is located. then append the coordinates to the end of the list, in case we may need to reuse them. Finally, extract the atoms our atoms from the big reference DNA from one of the possible locations (if available).
+
+If the length of the atoms to be compared is different, the program will continue. If not, both atoms set will be superimposed and calculates the RSMD.
+
+------ This is old version------
 For a complex containing DNA, we take the provided DNA strand as our reference and look for sufficient alignments among the DNA strands in the provided pdb files. As soon as an alignment has been obtained that passes the threshold, we will superimpose the two strands. The program will first compare the forward and then the reversed DNA strand to the reference DNA, if the first strand did not pass the alignment threshold. The threshold for the alignment here is set to 75% as we know that DNA strands can be shorter and thus a higher percentage will rule out many reasonable alignments simply because the compared DNA strand is very short.
 
 Once an alignment was found high enough and the two DNA strands are superimposed, the according protein chain will be add to the reference structure, if no clashes with the so far build reference structure were found. In case, the new protein chain clashes with the already included chains of the reference structure, we will drop the superimposition and move to the next pdb file in the list.
@@ -222,19 +243,20 @@ So far, the program can only be run from the command line. As we decided to give
 Last, but not least, it is important to mention the computational toll the program supposes. Due to the high number of comparisons and alignments performed in order to add a new chain to the model, as the model keeps growing, each step takes more time, which is further exemplified when we try to build an infinite model. In those scenarios, the program does take a long time to run and depending on the available hardware resources, it may even crash if not careful enough.
 
 
+
 # 6. Examples
 ## 6.1. Protein-Protein Complex: 1gzx
-As the first simple example for a protein-protein macrocomplex, we will present the heteromer [1gzx](https://www.rcsb.org/structure/1GZX). It is a haemoglobin consisting of four chains as it can be seen in the following figure.
+As the first simple example for a protein-protein macrocomplex, we will present the heteromer [1gzx](https://www.rcsb.org/structure/1GZX). It is a heamoglobin consisting of four chains as it can be seen in the following figure.
 
 <img src="./img/1gzx_assembly.png" alt="pdb1gz" width="300"/>
 
-The provided input folder (`examples/1gzx`) consist of three different files:
+The provided input folder (`examples/example_1/1gzx`) consist of three different files:
 * File1: 1gzx_A_B.pdb
 * File2: 1gzx_A_C.pdb
 * File3: 1gzx_A_D.pdb
 In this example, it can be noted that chain A in File1 is not a homologue to the chain A in File3. Thus, the naming of the chains is not relevant for the building of the model. For instance, File2 contains the binary interaction of two homologue proteins.
 
-Furthermore, we provide the user with a stoichiometry file (`stech/stec.txt`). This way, one can compare how the built structure differs when including the `-s` argument. The stoichiometry file consists of the following lines:
+Furthermore, we provide the user with a stoichiometry file (`examples/example_1/stech_1gzx.txt`). This way, one can compare how the built structure differs when including the `-s` argument. The stoichiometry file consists of the following lines:
 ```
 1gzx_A_B:2
 1gzx_A_D:1
@@ -243,8 +265,16 @@ Furthermore, we provide the user with a stoichiometry file (`stech/stec.txt`). T
 
 The final command has to be run on the terminal in order to build the macro complex of 1gzx:
 ```
-python3 project_SBI.py -i examples/1gzx -o testprot/ -s stech/stec.txt -v -f
+python3 project_SBI.py -i examples/example_1/1gzx -o examples/example_1/output_withstech -s examples/example_1/stech_ex1.txt -f -v
 ```
+|                 |          | Argument                    | Explanation                                                |  
+|-----------------:|----------|-----------------------------|----------------------------------------------------------|
+| Input folder     | -i       | examples/example_1/1gzx     | path to the folder containing the input files             |   
+| Output folder    | -o   | examples/example_1/output_withstech | path to the output folder: pdb file of model, analysis file |   
+|Optional:         |        |                             |                                                           |   
+| Stoichiometry    | -s     | examples/example_1/stech_1gzx.txt | path to provided stoichometry                             |   
+| Force output folder | -f    |                             | overwrites output folder if already exists                |   
+| Verbose          | -v       |                             | prompts standard output to terminal                       |   
 
 
 
@@ -256,7 +286,13 @@ ___Figure 1: 1gzx with a stoichiometry file provided.___
 
 It can be seen that the final pdb file of our model contains 4 chains, as indicated by the stoichiometry file. Since the first pairwise interaction was used twice for our model, the program automatically randomised the chain ID the second time the structure was added to avoid duplication.
 
-If no stoichiometry file would be provided for this example, the final complex would look like the following:
+If no stoichiometry file would be provided for this example, the command can be modified. Note, that it is almost the same as before, however without the option `-s` and we direct the output to a new folder to not overwrite the previous model.
+
+```
+python3 project_SBI.py -i examples/example_1/1gzx -o examples/example_1/output_nostech -f -v
+```
+
+When running this command, the model should look lie the following:
 
 <img src="./img/1gzx_nostech.png" alt="1gz_no" width="300"/>
 ___Figure 3: 1gzx with NO stoichiometry file provided.___
@@ -276,7 +312,7 @@ ___Figure 4: 1gzx with NO stoichiometry file provided.___
 
 <img src="./img/2o61_assembly.jpeg" alt="2o61" width="300"/>
 
-As this is a rather complex model, the input folder holds 54 pdb files containing binary interaction between one protein sequence and the according DNA strands. Thus, each file holds three chains. In contrast to the example of 1gzx, the naming of the files holds more information in this case:
+As this is a rather complex model, the input folder holds 54 pdb files containing binary interaction between one protein sequence and the according DNA double strands. Thus, each file holds three chains. In contrast to the example of 1gzx, the naming of the files holds more information in this case:
         {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb
 
 Example:
@@ -284,7 +320,7 @@ Example:
 
 This file holds part of the protein Q14653 which is Interferon regulatory factor 3 (IFR3, here chain D) in combination with a DNA double-strand (chain E and F).
 
-As mentioned under the section describing the command option stoichiometry file, the user has to provide the stoichiometry in a different format than for the protein-protein complex. This is because for complexes including DNA, the stoichiometry file consists of the name of the sub complexes and the number of times they shall be included in the final model. For this example, the optional stoichiometry file provided contains the following lines:
+As mentioned in [2.2 File Format](#fileformat), the user has to provide the stoichiometry in a different format than for the protein-protein complex. This is because for complexes including DNA, the stoichiometry file consists of the name of the sub complexes and the number of times they shall be included in the final model. For this example, the optional stoichiometry file provided contains the following lines:
 ```
 P05412:1
 P15336:1
@@ -293,16 +329,23 @@ Q04206:1
 Q14653:4
 ```
 
-When the user decides to provide a the path to the stoichiometry file in his command, the final complex will consist of one sub complex of each of the four first proteins and four times the sub complex Q14653.
-
-The final command run on the terminal to conduct the macrocomplex of 2O61 is:
------------------------TO DO-----------------TO DO-----------------TO DO-----------------------------
-```
-python3 HERE GOES THE FINAL NAME OF OUR SCRIPT !"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(/&%$%&/(/&%&/())))))"
+The final command run on the terminal to conduct a model for 2O61 including a stoichometry is:
 
 ```
+python3 project_SBI.py -i examples/example_2/2O61 -o examples/example_2/output_withstech -s examples/example_2/stech_ex2.txt -wt -n examples/example_2/ref_dna.pdb -f -v
+```
 
-The output is stored at __!"§$%&%$&/&%&/(&%/(/&%$§$%&/(/&%&/(__. If everything runs correctly, the model is expected to look something like the following:
+The build model should look similar to this:
 
-# ENTER SCREENSHOTS OF OUR MODELS HERE
---------------------------------------------------------------------------------------------------------
+<img src="./img/2O61_stech.png" alt="1gzx_compared"/>
+___Figure 5: 2O61 with stoichiometry file provided.___
+
+
+```
+python3 project_SBI.py -i examples/example_2/2O61 -o examples/example_2/output_nostech -wt -n examples/example_2/ref_dna.pdb -f -v
+```
+
+The output is stored in final_complex.pdb in the folder examples/example_2/output_nostech. If everything runs correctly, the model is expected to look something like the following:
+
+<img src="./img/2O61_nostech.png" alt="1gzx_compared"/>
+___Figure 6: 2O61 with NO stoichiometry file provided.___

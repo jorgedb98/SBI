@@ -1,4 +1,4 @@
-infinite# MACROBUILDER
+# MACROBUILDER
 *by Aitor, Jorge and Lilian*
 
 # Table of Content
@@ -6,6 +6,7 @@ infinite# MACROBUILDER
 - [1. Introduction](#introduction)
 - [2. Tutorial](#tutorial)
   - [2.1 Installation](#installation)
+  - [2.2 File Format](#fileformat)
 - [3. Theory](#Theory)
   - [3.1. Method and algorithm](#Method_and_algorithm)
   - [3.2. Biological problem](#Biological_problem)
@@ -42,16 +43,7 @@ __stoichiometry file__
 ```
 '-s', '--stoichiometry'
 ```
-The stoichiometry argument is optional. If the user knows the stoichiometry of the final complex, he can provide the __Path__ to the file containing the stoichiometry. Depending on the type of complex, the stoichiometry file should be in a certain format.
-Protein-Protein Complex:
-
-|         | Protein-Protein                     | Protein-Nucleotide                            |  
-|--------:|-------------------------------------|-----------------------------------------------|
-| Format  | [filename1]:3                       | [protein_complex1]:1                          |   
-|         | [filename2]:2                       | [protein_complex2]:3                          |   
-| Example | 1gzx_A_D:3                          | P05412:1                                      |   
-|         | 1gzxA_C:2                           | P15336:3                                      |   
-
+The stoichiometry argument is optional. If the user knows the stoichiometry of the final complex, he can provide the __Path__ to the file containing the stoichiometry. Depending on the type of complex, the stoichiometry file should be in a certain format, as described in section [2.2 File Format](#fileformat).
 
 __Nucleotide__
 ```
@@ -110,8 +102,42 @@ __Model Evaluation__
 '-ev','--eval'
 ```
 
-This options allows the user to select wheter to evaluate the macrocomplex built or not. By default, its value is set to false, but please that notice if set to true, it is compulsory that the input file name is the same as the pdb id for reference structure given the case of protein-nucleotide complexes.
+This options allows the user to select whether to evaluate the macro-complex built or not. Please note that if set to true, it is compulsory that the naming of the input files has to contain the pdb-ID of the reference structure in the correct format as descirbed in [2.2 File Format](#fileformat).
 
+
+## 2.2 File Format
+The program can be divided into two main parts: modeling protein-protein complexes and modeling complexes containing proteins and nucleotide sequences. In both cases, the user is requested to provide the input and stechiometry in a certain format to allow the program to run smoothly.
+
+In the first case of protein-protein case, the files within the input folder should best have the following format:
+          XXXX_A_B.pdb
+where X is the 4 letter pdb-ID and A and B the chain IDs. An example for this can be seen in [6.1. 1gzx](#1gzx).
+
+The chain ID can be repeated between files but not within a file. It does not matter if different chains have the same chain ID (the program will not assume chain A in one file equals chain A of another file). The stoichometry file, if provided, should hold the following format using the full filename:
+
+                  |         | Protein-Protein                     |
+                  |--------:|-------------------------------------|
+                  | Format  | [filename1]:3                       |
+                  |         | [filename2]:2                       |
+                  | Example | 1gzx_A_D:3                          |
+                  |         | 1gzxA_C:2                           |
+
+For the second case of a complex containing a nucleotide complex, the files should be formatted in the following manner:
+          YYYYYY.DNA.XXXX_A_EF.pdb
+
+where the 6 Ys are placeholders for the sprot-ID of the proteincomplex, the X again replace the pdb-ID, A is the protein chain and EF will be the two double strand DNA chains ( {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb ). In case of a one stranded RNA, the file name would hold only 'E' instead of 'EF'.
+
+The stoichometry file should be presented as the following:
+
+                  |         | Protein-Nucleotide                 |  
+                  |--------:|------------------------------------|
+                  | Format  | [protein_complex1]:1               |   
+                  |         | [protein_complex2]:3               |   
+                  | Example | P05412:1                           |   
+                  |         | P15336:3                           |   
+
+Additionally, the user is requested to provide a the path to a file of a reference nucleotide using the `-n` argument. This file does not have to be named specifically but should only contain one or two nucleotide strands, no further peptide sequences.
+
+An example for a protein-nucleotide complex can be seen in [6.2. 26O1](#26O1).
 
 # 3. Theory
 ## 3.1. Method and algorithm
@@ -158,11 +184,8 @@ The program will superimpose the reference structure to the model and prints the
 
 
 ### 3.1.2. Protein-Nucleic Acids
-For the provided input folder from the user, the naming of the files holds more information in this case:
+For the provided input folder from the user, the naming of the files holds more information as for protein-protein complex, as described in [2.2 File Format](#fileformat).
 
-```
-  {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb
-```
 For example, one file could be name P05412.DNA.1t2k_C_EF.pdb, meaning P05412is the protein complex, having DNA which binds toprotain domain 1t2k chian C, and DNA chians ids are E and F.
 
 In this case, the user must have provided also a reference structure of DNA against which the comparison will be done for each file.Since the program works for both DNA and RNA, it also takes into account how many chains this reference structure has.
