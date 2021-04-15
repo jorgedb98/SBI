@@ -8,7 +8,7 @@
 <div style="page-break-after: always;"></div>
 # Table of Content
 <!-- MDTOC maxdepth:6 firsth1:1 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->  
-- [1. Introduction](#1-introduction)   
+- [1. Introduction](#introduction)   
 - [2. Basics](#2-basics)   
    - [2.1 Installation](#21-installation)     
    - [2.2 File Format](#22-file-format)   
