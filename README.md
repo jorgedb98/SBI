@@ -7,7 +7,7 @@
 
 <div style="page-break-after: always;"></div>
 # Table of Content
-<!-- MDTOC maxdepth:6 firsth1:1 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->  
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 - [1. Introduction](#1 Introduction)   
 - [2. Basics](#2-basics)   
    - [2.1 Installation](#2.1-installation)     
@@ -26,11 +26,11 @@
    - [5.2. Evaluation for 2O61](#52-evaluation-for-2o61)   
    - [5.3. Evaluation for 5fj8](#53-evaluation-for-5fj8)   
 - [6. Limitations](#6-limitations)   
-
+<!-- /TOC -->
 
 <div style="page-break-after: always;"></div>
 
-<!-- /MDTOC -->
+
 # 1. Introduction
 `complex_assembler.py` is a python script built as final project for both Python and Structural Bioinformatics subject from the M.Sc in Bioinformatics for the Health Sciences. The aim of this program is to reconstruct macro-complexes from `pdb` files for protein-protein or RNA/DNA-protein.
 
