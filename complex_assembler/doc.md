@@ -237,6 +237,8 @@ However, with the rapid development of computers and decay in the computational 
 
 Once two chains that can be superimposed are identified, it is possible to calculate translation and rotation matrices so the coordinate system of both structures are identical. By equating the coordinate system, we are able calculate how different the equivalent chains are. There are multiple measurements available to evaluate the structural alignment, but the most simple one, the Root-Mean-Square Deviations (RMSD), was  the one employed in this project. RMSD is based on the average distance between two sets of atoms, usually the backbone atoms (α-carbons in the case of proteins and C4 carbons in DNA/RNA strands) of the superimposed molecules. By convention, bellow a value of 3 both structures will be considered the same.
 
+Once a complex is built, this may not be perfect. Further analysis should be carried out in order to study its quality, such as energy minimization or comparison to native complexes. Knowing the native complex is a powerful way to ensure wheter our model is correct or not. If one knows the original complex from which the binary interactions have been set in different pdb files, or even if searching for sequence homologues in order to extract information about the structure, this comparison is quite easy to make. Superimposing both final model and native complex may allow to study the superimposition of different chains and determine how far or close both models are, also retrieving information about RMSD.
+
 <div style="page-break-after: always;"></div>
 
 
