@@ -237,6 +237,8 @@ However, with the rapid development of computers and decay in the computational 
 
 Once two chains that can be superimposed are identified, it is possible to calculate translation and rotation matrices so the coordinate system of both structures are identical. By equating the coordinate system, we are able calculate how different the equivalent chains are. There are multiple measurements available to evaluate the structural alignment, but the most simple one, the Root-Mean-Square Deviations (RMSD), was  the one employed in this project. RMSD is based on the average distance between two sets of atoms, usually the backbone atoms (α-carbons in the case of proteins and C4 carbons in DNA/RNA strands) of the superimposed molecules. By convention, bellow a value of 3 both structures will be considered the same.
 
+Once a complex is built, this may not be perfect. Further analysis should be carried out in order to study its quality, such as energy minimization or comparison to native complexes. Knowing the native complex is a powerful way to ensure wheter our model is correct or not. If one knows the original complex from which the binary interactions have been set in different pdb files, or even if searching for sequence homologues in order to extract information about the structure, this comparison is quite easy to make. Superimposing both final model and native complex may allow to study the superimposition of different chains and determine how far or close both models are, also retrieving information about RMSD.
+
 <div style="page-break-after: always;"></div>
 
 
@@ -248,11 +250,13 @@ When the program was installed, the commands have to be called without calling `
 
 __If program NOT installed:__
 ```
-python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech -s ../examples/example_1/stech_ex1.txt -f -v
+python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech \
+-s ../examples/example_1/stech_ex1.txt -f -v
 ```
 __If program installed:__
 ```
-complex_assembler.py -i examples/example_1/1gzx -o examples/example_1/output_withstech -s examples/example_1/stech_ex1.txt -f -v
+complex_assembler.py -i examples/example_1/1gzx -o examples/example_1/output_withstech \
+-s examples/example_1/stech_ex1.txt -f -v
 ```
 
 ## 4.1. Protein-Protein Complex: 1gzx
@@ -276,7 +280,8 @@ Furthermore, we provide the user with a stoichiometry file (`examples/example_1/
 
 The final command has to be run on the terminal in order to build the macro complex of 1gzx:
 ```
-python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech -s ../examples/example_1/stech_ex1.txt -f -v
+python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech \
+-s ../examples/example_1/stech_ex1.txt -f -v
 ```
 |   Argument       |          |    Addition                 | Explanation                                                |  
 |-----------------:|----------|-----------------------------|----------------------------------------------------------|
@@ -338,7 +343,8 @@ The final command run on the terminal to conduct a model for 2O61 including a st
 
 We are aware that the template DNA may not be always available. In such cases (e.g. presented under 4.3 for 5fj8), the program tries to build a model based on the same approach as for protein-protein interaction. This requires information regarding the relative position of protein complexes and DNA. Is this the case, the stoichometry provided by the user needs to be in the same format as described for the [1gzx](https://www.rcsb.org/structure/1GZX) complex reconstruction.
 ```
-python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_withstech -s ../examples/example_2/stech_ex2.txt -wt -n ../examples/example_2/ref_dna.pdb -f -v
+python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_withstech \
+-s ../examples/example_2/stech_ex2.txt -wt -n ../examples/example_2/ref_dna.pdb -f -v
 ```
 
 |   Argument       |          |    Addition                 | Explanation                                                |  
@@ -360,7 +366,8 @@ __Figure 5:__ _2O61 with stoichiometry file provided, colored by chains._
 
 The same command but without a stoichometry file, would look as the following:
 ```
-python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_nostech -wt -n ../examples/example_2/ref_dna.pdb -f -v
+python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_nostech \
+-wt -n ../examples/example_2/ref_dna.pdb -f -v
 ```
 The output is stored in final_complex.pdb in the folder examples/example_2/output_nostech.
 However, since already the building of the first model only included 3 chains and could not fully satisfy the stoichiometry, not providing a stoichiometry did not change the final complex. Thus, the model looks the same as presented in figure 5.
