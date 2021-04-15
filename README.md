@@ -11,7 +11,9 @@
 - [1. Introduction](#1-introduction)
 - [2. Basics](#2-basics)
   * [2.1 Installation](#21-installation)
-
+  * [2.2 File Format](#22-fileformat)
+- [3. Theory](#3-theory)
+  * [3.1 Method and algorythm](#31-methodandalgorythm)
 
 <!-- toc -->
 
