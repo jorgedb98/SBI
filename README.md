@@ -8,10 +8,10 @@
 <div style="page-break-after: always;"></div>
 # Table of Content
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
-- [1. Introduction](#1 Introduction)   
-- [2. Basics](#2-basics)   
-   - [2.1 Installation](#2.1-installation)     
-   - [2.2 File Format](#2.2-file-format)   
+- [1. Introduction](#Introduction)   
+- [2. Basics](#basics)   
+   - [2.1 Installation](#installation)     
+   - [2.2 File Format](#file-format)   
 - [3. Theory](#3-theory)   
    - [3.1. Method and algorithm](#3.1 Method-and-algorithm)   
       - [3.1.1. Protein-protein](#311-protein-protein)   
