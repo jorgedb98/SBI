@@ -37,7 +37,7 @@
 
 # 2. Basics
 ## 2.1 Installation
-To install the program, please download the github repository and clone it somewhere in your local workspace. Once cloned, access the complex_assembler folderand run the following command:
+To install the program, please download the github repository and clone it somewhere in your local workspace. Once cloned, access the complex_assembler folder and run the following command:
 
 ```
 sudo python3 setup.py install
@@ -81,7 +81,7 @@ If the user wants to build a macro complex consisting of a nucleotide sequence, 
 '-f','--force'
 ```
 __Force__ allows the user to overwrite and existing folder that shares name with the one provided for the __output__ argument. The default value is set to false, so it will not overwrite the conflicting folder and the program will just crush
-#### ___Be aware!___, the current folder will be deleted after the program is run.
+___Be aware!___, the current folder will be deleted after the program is run.
 
 __Logging__
 ```
@@ -99,14 +99,14 @@ __Max Iterations__
 ```
 '-m','--max_iter'
 ```
-The option max_iter specifies the number of maximal iterations to go over the input files to build the model so the program will not run indefinitely when infinte structures are built or if no new chains can be added to the model. The default value is set to 100, thus, when provided a high number of files the program might exit before the structure is finished.
+The option max_iter specifies the number of maximal iterations to go over the input files to build the model so the program will not run indefinitely when infinite structures are built or if no new chains can be added to the model. The default value is set to 100, thus, when provided a high number of files the program might exit before the structure is finished.
 
 __Protien-Protein / Protein-Nucleic Acid discrimination__
 ```
 '-wt','--no_template'
 ```
 
-This option allows the program to differenciate between protein-protein interactions and protein-nucleic acid interaction. By default, its values is set to 'nt', this means there is no nucleic acid template, thus the program will run under assumption of protein-protein interaction.
+This option allows the program to differentiate between protein-protein interactions and protein-nucleic acid interaction. By default, its values is set to 'nt', this means there is no nucleic acid template, thus the program will run under assumption of protein-protein interaction.
 However, if it is set to 'wt', then the program will run for protein-nucleic acid, yet the user should provide the template for the nucleic acid.
 
 __Nuc templae__
@@ -147,7 +147,7 @@ The chain ID can be repeated between files but not within a file. It does not ma
                   |         | [filename2]:2                       |
                   | Example | 1gzx_A_D:3                          |
                   |         | 1gzxA_C:2                           |
-|   |   |   |
+
 An example for this can be seen in the example 1 on 1gzx.
 
 
@@ -155,7 +155,7 @@ For the second case of a __complex containing nucleotide chain()__, depending on
 In one the files should be formatted in the following manner:
           YYYYYY.DNA.XXXX_A_EF.pdb
 
-where the 6 Ys are placeholders for the sprot-ID of the proteincomplex, the X again replace the pdb-ID, A is the protein chain and EF will be the two double strand DNA chains ( {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb ). In case of a one stranded RNA, the file name would hold only 'E' instead of 'EF'.
+where the 6 Ys are placeholders for the sprot-ID of the protein complex, the X again replace the pdb-ID, A is the protein chain and EF will be the two double strand DNA chains ( {protein_name}.DNA.{pdb_name}_{chain} _{dnachains}.pdb ). In case of a one stranded RNA, the file name would hold only 'E' instead of 'EF'.
 
 The stoichometry file should be presented as the following:
 
@@ -193,7 +193,7 @@ According to this, chain type is selected and the alpha carbons or C4's are retr
 ### 3.1.1. Protein-protein
 If the user does not indicate the 'wt' option, and the chain-type is protein, a message will prompt saying so to the terminal (given the case the user has selected so with the option verbose).
 
-__The general approach can be summarized as the following:__
+__The general approach can be summarised as the following:__
 - obtain reference structure and iterate over possible moving structures to be added
 - align chain of reference and moving structure
 - if good alignment score: superimpose the two
@@ -243,7 +243,7 @@ However, with the rapid development of computers and decay in the computational 
 
 Once two chains that can be superimposed are identified, it is possible to calculate translation and rotation matrices so the coordinate system of both structures are identical. By equating the coordinate system, we are able calculate how different the equivalent chains are. There are multiple measurements available to evaluate the structural alignment, but the most simple one, the Root-Mean-Square Deviations (RMSD), was  the one employed in this project. RMSD is based on the average distance between two sets of atoms, usually the backbone atoms (α-carbons in the case of proteins and C4 carbons in DNA/RNA strands) of the superimposed molecules. By convention, bellow a value of 3 both structures will be considered the same.
 
-Once a complex is built, this may not be perfect. Further analysis should be carried out in order to study its quality, such as energy minimization or comparison to native complexes. Knowing the native complex is a powerful way to ensure wheter our model is correct or not. If one knows the original complex from which the binary interactions have been set in different pdb files, or even if searching for sequence homologues in order to extract information about the structure, this comparison is quite easy to make. Superimposing both final model and native complex may allow to study the superimposition of different chains and determine how far or close both models are, also retrieving information about RMSD.
+Once a complex is built, this may not be perfect. Further analysis should be carried out in order to study its quality, such as energy minimization or comparison to native complexes. Knowing the native complex is a powerful way to ensure whether our model is correct or not. If one knows the original complex from which the binary interactions have been set in different pdb files, or even if searching for sequence homologues in order to extract information about the structure, this comparison is quite easy to make. Superimposing both final model and native complex may allow to study the superimposition of different chains and determine how far or close both models are, also retrieving information about RMSD.
 
 <div style="page-break-after: always;"></div>
 
@@ -251,20 +251,23 @@ Once a complex is built, this may not be perfect. Further analysis should be car
 # 4. Tutorial
 In the following, we will present a Tutorial to run the program on three different examples. The output models will be discussed in section 4. Analysis in 5. Limitations in 6.
 
-__Disclaimer:__ the code lines in the following examples are provided given the fact that the user did NOT install the program. This means that the commands lines here call `python3` to open the script of `complex_assembler.py`.
+####Disclaimer:
+The code lines in the following examples are provided given the fact that the user did __not install the program__. This means that the commands lines here call `python3` to open the script of `complex_assembler.py`.
 When the program was installed, the commands have to be called without calling `python3` and slightly modifying the path to the example folders. The following example will illustrate the differences:
 
 __If program NOT installed:__
 ```
-python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech -s ../examples/example_1/stech_ex1.txt -f -v
+python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech \
+-s ../examples/example_1/stech_ex1.txt -f -v
 ```
 __If program installed:__
 ```
-complex_assembler.py -i examples/example_1/1gzx -o examples/example_1/output_withstech -s examples/example_1/stech_ex1.txt -f -v
+complex_assembler.py -i examples/example_1/1gzx -o examples/example_1/output_withstech \
+-s examples/example_1/stech_ex1.txt -f -v
 ```
 
 ## 4.1. Protein-Protein Complex: 1gzx
-As the first simple example for a protein-protein macrocomplex, we will present the heteromer [1gzx](https://www.rcsb.org/structure/1GZX). It is a heamoglobin consisting of four chains as it can be seen in the following figure.
+As the first simple example for a protein-protein macrocomplex, we will present the heteromer [1gzx](https://www.rcsb.org/structure/1GZX). It is a hemoglobin consisting of four chains as it can be seen in the following figure.
 
 <img src="./img/1gzx_assembly.png" alt="pdb1gz" width="300"/>
 __Figure 1:__ _1gzx 3D structure from pdb database, colored by chains_
@@ -284,7 +287,8 @@ Furthermore, we provide the user with a stoichiometry file (`examples/example_1/
 
 The final command has to be run on the terminal in order to build the macro complex of 1gzx:
 ```
-python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech -s ../examples/example_1/stech_ex1.txt -f -v
+python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech \
+-s ../examples/example_1/stech_ex1.txt -f -v
 ```
 |   Argument       |          |    Addition                 | Explanation                                                |  
 |-----------------:|----------|-----------------------------|----------------------------------------------------------|
@@ -300,7 +304,7 @@ python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/exampl
 The output is stored in 'final_complex.png' in a folder at examples/output/1gzx_stech. If everything runs correctly, the model is expected to look like the following:
 
 <img src="./img/1gzx_stech.png" alt="1gz" width="300"/>
-__Figure 2:__ _1gzx with a stoichiometry file provided, colored by chains_
+__Figure 2:__ _1gzx with a stoichiometry file provided, coloured by chains_
 
 It can be seen that the final pdb file of our model contains 4 chains, as indicated by the stoichiometry file. Since the first pairwise interaction was used twice for our model, the program automatically randomised the chain ID the second time the structure was added to avoid duplication.
 
@@ -346,7 +350,8 @@ The final command run on the terminal to conduct a model for 2O61 including a st
 
 We are aware that the template DNA may not be always available. In such cases (e.g. presented under 4.3 for 5fj8), the program tries to build a model based on the same approach as for protein-protein interaction. This requires information regarding the relative position of protein complexes and DNA. Is this the case, the stoichometry provided by the user needs to be in the same format as described for the [1gzx](https://www.rcsb.org/structure/1GZX) complex reconstruction.
 ```
-python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_withstech -s ../examples/example_2/stech_ex2.txt -wt -n ../examples/example_2/ref_dna.pdb -f -v
+python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_withstech \
+-s ../examples/example_2/stech_ex2.txt -wt -n ../examples/example_2/ref_dna.pdb -f -v
 ```
 
 |   Argument       |          |    Addition                 | Explanation                                                |  
@@ -368,7 +373,8 @@ __Figure 5:__ _2O61 with stoichiometry file provided, colored by chains._
 
 The same command but without a stoichometry file, would look as the following:
 ```
-python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_nostech -wt -n ../examples/example_2/ref_dna.pdb -f -v
+python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_nostech \
+-wt -n ../examples/example_2/ref_dna.pdb -f -v
 ```
 The output is stored in final_complex.pdb in the folder examples/example_2/output_nostech.
 However, since already the building of the first model only included 3 chains and could not fully satisfy the stoichiometry, not providing a stoichiometry did not change the final complex. Thus, the model looks the same as presented in figure 5.
@@ -416,9 +422,9 @@ __Figure 7:__ _Our model and the reference structure for 1gzx superimposed (blue
 ## 5.2. Evaluation for 2O61
 When comparing the native model to the complex built using the program and superimposing it several things can be noticed.
 
-First, looking at figure 8, there is not a complete reference model for the 2O61 complex, because we are missing some native parts (red) in places were we have modeled (blue). Once, superimposed, the superimpositions is not enitrely good, however minor differences appear in the superimposed chains. Nonethelss, there are some chains missing in our model in comparison to what we can find in the native one. When running the program, if verboes options set, one may notice that several chains are skipped either for high number of clashes or because of the RMSD. Howeveer, improving the RMSD did not show any improvement in the modle (not shown in figures, but tested).
+First, looking at figure 8, there is not a complete reference model for the 2O61 complex, because we are missing some native parts (red) in places were we have modelled (blue). Once, superimposed, the superimpositions is not entirely good, however minor differences appear in the superimposed chains. Nonetheless, there are some chains missing in our model in comparison to what we can find in the native one. When running the program, if verbose options set, one may notice that several chains are skipped either for high number of clashes or because of the RMSD. However, improving the RMSD did not show any improvement in the modlel (not shown in figures, but tested).
 
-We would also like to remark the format of the input files for this examples. Some of them contains HETATM in some nucleotides for the DNA chian, which lead to different size the reference atoms and atoms to add when it came to superimposition. Due to this length difference, those files had to be skipped. Besides, when trying to replace the apparently incorrect HETATM with ATOM follwed by the correct number of spaces in order to keep track of the correct pdb format, an error message for wrong coordinates prompetd, stoping us from adding these files anyways. This problem also helps to explain the difference in terms of number of chains between our model and the native complex.
+We would also like to remark the format of the input files for this examples. Some of them contains HETATM in some nucleotides for the DNA chain, which lead to different size the reference atoms and atoms to add when it came to superimposition. Due to this length difference, those files had to be skipped. Besides, when trying to replace the apparently incorrect HETATM with ATOM followd by the correct number of spaces in order to keep track of the correct pdb format, an error message for wrong coordinates prompted, stoping us from adding these files anyways. This problem also helps to explain the difference in terms of number of chains between our model and the native complex.
 
 <img src="./img/2O61_eval.png" alt="1gzx_eval" width="300"/>
 __Figure 8:__ _Our model and the reference structure for 2O61 superimposed (blue=our model, red = reference from pdb)._
