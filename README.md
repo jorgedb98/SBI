@@ -31,7 +31,7 @@
 <div style="page-break-after: always;"></div>
 
 
-# 1. Introduction
+#1. Introduction
 `complex_assembler.py` is a python script built as final project for both Python and Structural Bioinformatics subject from the M.Sc in Bioinformatics for the Health Sciences. The aim of this program is to reconstruct macro-complexes from `pdb` files for protein-protein or RNA/DNA-protein.
 
 
