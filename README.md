@@ -8,12 +8,12 @@
 <div style="page-break-after: always;"></div>
 # Table of Content
 <!-- MDTOC maxdepth:6 firsth1:1 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->  
-- [1. Introduction](#1-introduction)   
+- [1. Introduction](#1 Introduction)   
 - [2. Basics](#2-basics)   
-   - [2.1 Installation](#21-installation)     
-   - [2.2 File Format](#22-file-format)   
+   - [2.1 Installation](#2.1-installation)     
+   - [2.2 File Format](#2.2-file-format)   
 - [3. Theory](#3-theory)   
-   - [3.1. Method and algorithm](#31-method-and-algorithm)   
+   - [3.1. Method and algorithm](#3.1 Method-and-algorithm)   
       - [3.1.1. Protein-protein](#311-protein-protein)   
       - [3.1.2. Protein-Nucleic Acids](#312-protein-nucleic-acids)     
    - [3.2. Biological Problems](#32-biological-problems)   
