@@ -6,31 +6,31 @@
 <h3 style="text-align:center">Second Trimester 2021</h3>
 
 <div style="page-break-after: always;"></div>
-# Table of Content
-<!-- MDTOC maxdepth:6 firsth1:1 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->  
-- [1. Introduction](#1-introduction)   
-- [2. Basics](#2-basics)   
-   - [2.1 Installation](#21-installation)     
-   - [2.2 File Format](#22-file-format)   
-- [3. Theory](#3-theory)   
-   - [3.1. Method and algorithm](#31-method-and-algorithm)   
-      - [3.1.1. Protein-protein](#311-protein-protein)   
-      - [3.1.2. Protein-Nucleic Acids](#312-protein-nucleic-acids)     
-   - [3.2. Biological Problems](#32-biological-problems)   
-- [4. Tutorial](#4-tutorial)   
-   - [4.1. Protein-Protein Complex: 1gzx](#41-protein-protein-complex-1gzx)   
-   - [4.2. Protein-Nucleotide Complex: 2O61](#42-protein-nucleotide-complex-2o61)   
-   - [4.3. Protein-Protein Complex (with some nucleotide chains): 5fj8](#43-protein-protein-complex-with-some-nucleotide-chains-5fj8)   
-- [5. Analysis](#5-analysis)   
-   - [5.1. Evaluation for 1gzx](#51-evaluation-for-1gzx)   
-   - [5.2. Evaluation for 2O61](#52-evaluation-for-2o61)   
-   - [5.3. Evaluation for 5fj8](#53-evaluation-for-5fj8)   
-- [6. Limitations](#6-limitations)   
 
+
+- [1. Introduction](#1-introduction)
+- [2. Basics](#2-basics)
+  * [2.1 Installation](#21-installation)
+  * [2.2 File Format](#22-file-format)
+- [3. Theory](#3-theory)
+  * [3.1 Method and algorithm](#31-method-and-algorithm)
+    + [3.1.1 Protein protein](#311-protein-protein)
+    + [3.1.2 Protein Nucleic Acids](#312-protein-nucleic-acids)
+  * [3.2 Biological Problems](#32-biological-problems)
+- [4. Tutorial](#4-tutorial)
+  * [4.1 Protein Protein Complex 1gzx](#41-protein-protein-complex-1gzx)
+  * [4.2 Protein Nucleotide Complex 2O61](#42-protein-nucleotide-complex-2o61)
+  * [4.3 Protein Protein Complex 5fj8](#43-protein-protein-complex-5fj8)
+- [5. Analysis](#5-analysis)
+  * [5.1 Evaluation for 1gzx](#51-evaluation-for-1gzx)
+  * [5.2 Evaluation for 2O61](#52-evaluation-for-2o61)
+  * [5.3 Evaluation for 5fj8](#53-evaluation-for-5fj8)
+- [6. Limiations](#6-limitations)
+<!-- toc -->
 
 <div style="page-break-after: always;"></div>
 
-<!-- /MDTOC -->
+
 # 1. Introduction
 `complex_assembler.py` is a python script built as final project for both Python and Structural Bioinformatics subject from the M.Sc in Bioinformatics for the Health Sciences. The aim of this program is to reconstruct macro-complexes from `pdb` files for protein-protein or RNA/DNA-protein.
 
@@ -190,7 +190,7 @@ Once this is done, the program will differentiate between protein-protein and nu
 
 According to this, chain type is selected and the alpha carbons or C4's are retrieved.
 
-### 3.1.1. Protein-protein
+### 3.1.1. Protein protein
 If the user does not indicate the 'wt' option, and the chain-type is protein, a message will prompt saying so to the terminal (given the case the user has selected so with the option verbose).
 
 __The general approach can be summarised as the following:__
@@ -216,7 +216,7 @@ The user can specify the option `-e` to run an evaluation after the model was bu
 
 The program will superimpose the reference structure to the model and print the RMSD to the analysis file. This gives the user an idea on the goodness of the model given a reference structure is known.
 
-### 3.1.2. Protein-Nucleic Acids
+### 3.1.2. Protein Nucleic Acids
 For the provided input folder from the user, the naming of the files holds more information as for protein-protein complex, as described in 2.2 File Format.
 
 For example, one file could be name P05412.DNA.1t2k_C_EF.pdb, meaning P05412is the protein complex, having DNA which binds toprotain domain 1t2k chain C, and DNA chains ids are E and F.
@@ -266,7 +266,7 @@ complex_assembler.py -i examples/example_1/1gzx -o examples/example_1/output_wit
 -s examples/example_1/stech_ex1.txt -f -v
 ```
 
-## 4.1. Protein-Protein Complex: 1gzx
+## 4.1. Protein Protein Complex 1gzx
 As the first simple example for a protein-protein macrocomplex, we will present the heteromer [1gzx](https://www.rcsb.org/structure/1GZX). It is a hemoglobin consisting of four chains as it can be seen in the following figure.
 
 <img src="./img/1gzx_assembly.png" alt="pdb1gz" width="300"/>
@@ -322,7 +322,7 @@ __Figure 3:__ _1gzx with NO stoichiometry file provided, colored by chains._
 Comparing the two figures above, it can be seen that in the case of no stoichiometry provided, the final complex only contains three chains. As explained under limitations, our program will consider each structure only once in the case that the user provides no stoichiometry file for the protein-protein complex.
 
 
-## 4.2. Protein-Nucleotide Complex: 2O61
+## 4.2. Protein Nucleotide Complex 2O61
 [2O61](https://www.rcsb.org/structure/2O61) is an example for a protein-nucleotide complex. The model describes a structure of NFkB, IRF7, IRF3 bound to the interferon-b enhancer. The 3D structure from the pdb file for 2O61 can be seen in figure 3:
 
 <img src="./img/1gzx_nostech.png" alt="1gz_no" width="300"/>
@@ -379,7 +379,7 @@ python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/exampl
 The output is stored in final_complex.pdb in the folder examples/example_2/output_nostech.
 However, since already the building of the first model only included 3 chains and could not fully satisfy the stoichiometry, not providing a stoichiometry did not change the final complex. Thus, the model looks the same as presented in figure 5.
 
-## 4.3. Protein-Protein Complex (with some nucleotide chains): 5fj8
+## 4.3. Protein Protein Complex 5fj8
 
 Modelling the complex [5fj8](https://www.rcsb.org/structure/5FJ8) could be considered a middle point between the previous two approaches. The 3D structure of the pdb file for 5j8 looks like the following:
 
