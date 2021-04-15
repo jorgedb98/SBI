@@ -248,11 +248,13 @@ When the program was installed, the commands have to be called without calling `
 
 __If program NOT installed:__
 ```
-python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech -s ../examples/example_1/stech_ex1.txt -f -v
+python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech \
+-s ../examples/example_1/stech_ex1.txt -f -v
 ```
 __If program installed:__
 ```
-complex_assembler.py -i examples/example_1/1gzx -o examples/example_1/output_withstech -s examples/example_1/stech_ex1.txt -f -v
+complex_assembler.py -i examples/example_1/1gzx -o examples/example_1/output_withstech \
+-s examples/example_1/stech_ex1.txt -f -v
 ```
 
 ## 4.1. Protein-Protein Complex: 1gzx
@@ -276,7 +278,8 @@ Furthermore, we provide the user with a stoichiometry file (`examples/example_1/
 
 The final command has to be run on the terminal in order to build the macro complex of 1gzx:
 ```
-python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech -s ../examples/example_1/stech_ex1.txt -f -v
+python3 complex_assembler.py -i ../examples/example_1/1gzx -o ../examples/example_1/output_withstech \
+-s ../examples/example_1/stech_ex1.txt -f -v
 ```
 |   Argument       |          |    Addition                 | Explanation                                                |  
 |-----------------:|----------|-----------------------------|----------------------------------------------------------|
@@ -338,7 +341,8 @@ The final command run on the terminal to conduct a model for 2O61 including a st
 
 We are aware that the template DNA may not be always available. In such cases (e.g. presented under 4.3 for 5fj8), the program tries to build a model based on the same approach as for protein-protein interaction. This requires information regarding the relative position of protein complexes and DNA. Is this the case, the stoichometry provided by the user needs to be in the same format as described for the [1gzx](https://www.rcsb.org/structure/1GZX) complex reconstruction.
 ```
-python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_withstech -s ../examples/example_2/stech_ex2.txt -wt -n ../examples/example_2/ref_dna.pdb -f -v
+python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_withstech \
+-s ../examples/example_2/stech_ex2.txt -wt -n ../examples/example_2/ref_dna.pdb -f -v
 ```
 
 |   Argument       |          |    Addition                 | Explanation                                                |  
@@ -360,7 +364,8 @@ __Figure 5:__ _2O61 with stoichiometry file provided, colored by chains._
 
 The same command but without a stoichometry file, would look as the following:
 ```
-python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_nostech -wt -n ../examples/example_2/ref_dna.pdb -f -v
+python3 complex_assembler.py -i ../examples/example_2/2O61 -o ../examples/example_2/output_nostech \
+-wt -n ../examples/example_2/ref_dna.pdb -f -v
 ```
 The output is stored in final_complex.pdb in the folder examples/example_2/output_nostech.
 However, since already the building of the first model only included 3 chains and could not fully satisfy the stoichiometry, not providing a stoichiometry did not change the final complex. Thus, the model looks the same as presented in figure 5.
