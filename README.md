@@ -6,32 +6,18 @@
 <h3 style="text-align:center">Second Trimester 2021</h3>
 
 <div style="page-break-after: always;"></div>
-# Table of Content
-<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
-- [1. Introduction](#Introduction)   
-- [2. Basics](#basics)   
-   - [2.1 Installation](#installation)     
-   - [2.2 File Format](#file-format)   
-- [3. Theory](#3-theory)   
-   - [3.1. Method and algorithm](#3.1 Method-and-algorithm)   
-      - [3.1.1. Protein-protein](#311-protein-protein)   
-      - [3.1.2. Protein-Nucleic Acids](#312-protein-nucleic-acids)     
-   - [3.2. Biological Problems](#32-biological-problems)   
-- [4. Tutorial](#4-tutorial)   
-   - [4.1. Protein-Protein Complex: 1gzx](#41-protein-protein-complex-1gzx)   
-   - [4.2. Protein-Nucleotide Complex: 2O61](#42-protein-nucleotide-complex-2o61)   
-   - [4.3. Protein-Protein Complex (with some nucleotide chains): 5fj8](#43-protein-protein-complex-with-some-nucleotide-chains-5fj8)   
-- [5. Analysis](#5-analysis)   
-   - [5.1. Evaluation for 1gzx](#51-evaluation-for-1gzx)   
-   - [5.2. Evaluation for 2O61](#52-evaluation-for-2o61)   
-   - [5.3. Evaluation for 5fj8](#53-evaluation-for-5fj8)   
-- [6. Limitations](#6-limitations)   
-<!-- /TOC -->
+
+
+- [1. Introduction](#1-introduction)
+- [2. Basics](#2-basics)
+
+
+<!-- toc -->
 
 <div style="page-break-after: always;"></div>
 
 
-#1. Introduction
+# 1. Introduction
 `complex_assembler.py` is a python script built as final project for both Python and Structural Bioinformatics subject from the M.Sc in Bioinformatics for the Health Sciences. The aim of this program is to reconstruct macro-complexes from `pdb` files for protein-protein or RNA/DNA-protein.
 
 
