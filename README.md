@@ -10,6 +10,7 @@
 
 - [1. Introduction](#1-introduction)
 - [2. Basics](#2-basics)
+  * [2.1 Installation](#21-installation)
 
 
 <!-- toc -->
