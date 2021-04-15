@@ -9,7 +9,7 @@ Created on April 2021
 from setuptools import setup
 from os import path
 
-with open('doc.md','r') as f:
+with open('README.md','r') as f:
     long_description=f.read()
 
 setup(name='complex_asssembler',
